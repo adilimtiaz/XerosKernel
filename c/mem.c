@@ -1,5 +1,5 @@
 /* mem.c : memory manager
- */
+*/
 
 #include <xeroskernel.h>
 #include <i386.h>
@@ -15,38 +15,38 @@ struct struct_mem {
     mem         *next;
     mem         *prev;
     int         size;
-  unsigned int sanity;
-  unsigned char data [0];
+    unsigned int sanity;
+    unsigned char data [0];
 };
 
 static mem      *head;
 
- void kmeminit( void ) {
-/****************************/
+void kmeminit( void ) {
+    /****************************/
 
-     long       s;
+    long       s;
 
-     s = ( freemem + 0x10 ) & PARAGRAPH_MASK;
+    s = ( freemem + 0x10 ) & PARAGRAPH_MASK;
 
-     head = (mem *)s;
-     head->size = HOLESTART - s;
-     head->prev = NULL;
+    head = (mem *)s;
+    head->size = HOLESTART - s;
+    head->prev = NULL;
 
-     s = HOLEEND;
+    s = HOLEEND;
 
-     head->next = (mem *)s;
-     head->next->next = NULL;
-     head->next->prev = head;
-     head->next->size = (1024 * 1024 * 4) - HOLEEND;
+    head->next = (mem *)s;
+    head->next->next = NULL;
+    head->next->prev = head;
+    head->next->size = (1024 * 1024 * 4) - HOLEEND;
 }
 
 int kfree(void * mem) {
-  return 1;
+    return 1;
 }
 
 
- void *kmalloc( size_t size ) {
-/********************************/
+void *kmalloc( size_t size ) {
+    /********************************/
 
     mem         *p;
     mem         *r;
@@ -62,7 +62,7 @@ int kfree(void * mem) {
     }
 
     if( ( p->size - size ) < sizeof( mem ) ) {
-       if( p->next ) {
+        if( p->next ) {
             p->next->prev = p->prev;
         }
 
