@@ -17,6 +17,9 @@ void     dispatch( void ) {
     funcptr     fp;
     int         stack;
     va_list     ap;
+    // TODO: 100 is random
+    char         putResult[100];
+    PID_t       pid;
 
     for( p = next(); p; ) {
         //      kprintf("Process %x selected stck %x\n", p, p->esp);
@@ -33,12 +36,31 @@ void     dispatch( void ) {
                 ready( p );
                 p = next();
                 break;
-            case(SYS_GET_PID):
-                p->ret = p->pid;
-                break;
             case(SYS_STOP):
                 p->state = STATE_STOPPED;
                 p = next();
+                break;
+            case(SYS_GET_PID):
+                p->ret = p->pid;
+                break;
+            case(SYS_PUTS):
+                ap = (va_list) p->args;
+                sprintf(putResult, "%s\n", (va_arg(ap, char*)));
+                kprintf(putResult);
+                break;
+            case(SYS_KILL):
+                ap = (va_list) p->args;
+                pid = (PID_t) va_arg(ap, int);
+
+                // If pid is current process
+                // TODO: is this proper way to terminate?
+                if (p->pid == pid) {
+                    p->state = STATE_STOPPED;
+                    p = next();
+                    break;
+                }
+
+                p->ret = kill(pid);
                 break;
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
@@ -87,5 +109,24 @@ extern pcb      *next( void ) {
     }
 
     return( p );
+}
+
+extern int kill(PID_t pid) {
+    pcb *p = NULL;
+
+    for (int i = 0; i < MAX_PROC; i++) {
+        if (proctab[i].pid == pid) {
+            p = &proctab[i];
+        }
+    }
+
+    // If pid not found
+    if (p == NULL) {
+        return -1;
+    }
+
+    p->state = STATE_STOPPED;
+    // TODO: kfree here?
+    return 0;
 }
 

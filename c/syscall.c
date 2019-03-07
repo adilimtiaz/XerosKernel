@@ -49,3 +49,11 @@ void sysstop( void ) {
 PID_t sysgetpid(void) {
    return syscall(SYS_GET_PID);
 }
+
+void sysputs(char *str) {
+    syscall(SYS_PUTS, str);
+}
+
+int syskill(PID_t pid) {
+    return syscall(SYS_KILL, pid);
+}

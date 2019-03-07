@@ -65,6 +65,8 @@ void           outb(unsigned int, unsigned char);
 #define SYS_CREATE      22
 #define SYS_TIMER       33
 #define SYS_GET_PID     34
+#define SYS_PUTS        35
+#define SYS_KILL        36
 
 
 /* Structure to track the information associated with a single process */
@@ -123,6 +125,7 @@ void     dispatch( void );
 void     dispatchinit( void );
 void     ready( pcb *p );
 pcb      *next( void );
+int      kill(PID_t pid);
 void     contextinit( void );
 int      contextswitch( pcb *p );
 int      create( funcptr fp, size_t stack );
@@ -137,6 +140,8 @@ unsigned int          syscreate( funcptr fp, size_t stack );
 void                  sysyield( void );
 void                  sysstop( void );
 PID_t                 sysgetpid(void);
+void                  sysputs(char *str);
+int                   syskill(PID_t pid);
 
 /* The initial process that the system creates and schedules */
 void     root( void );

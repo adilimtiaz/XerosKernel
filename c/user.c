@@ -11,7 +11,7 @@ void producer( void ) {
 
     for( i = 0; i < 5; i++ ) {
         kprintf( "Produce %d\n", i );
-        // TEST: kprintf("<<< producer PID: %u\n", sysgetpid());
+        // kprintf("<<< producer PID: %u\n", sysgetpid()); // TEST: 3.1
         sysyield();
     }
 
@@ -26,6 +26,7 @@ void consumer( void ) {
 
     for( i = 0; i < 5; i++ ) {
         kprintf( "Consume %d \n", i );
+        // syskill(3); // TEST: 3.1
         sysyield();
     }
 
@@ -44,6 +45,8 @@ void     root( void ) {
     con_pid =  syscreate( &consumer, 4096 );
 
     kprintf("Proc pid = %u Con pid = %u\n", proc_pid, con_pid);
+
+    sysputs("<< Print from sysputs"); // TEST 3.1
 
     for( ;; ) {
         sysyield();
