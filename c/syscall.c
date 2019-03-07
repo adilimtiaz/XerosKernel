@@ -57,3 +57,7 @@ void sysputs(char *str) {
 int syskill(PID_t pid) {
     return syscall(SYS_KILL, pid);
 }
+
+int syssetprio(int priority) {
+    return syscall(SYS_PRIORITY, priority);
+}

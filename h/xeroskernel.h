@@ -67,6 +67,7 @@ void           outb(unsigned int, unsigned char);
 #define SYS_GET_PID     34
 #define SYS_PUTS        35
 #define SYS_KILL        36
+#define SYS_PRIORITY    37
 
 
 /* Structure to track the information associated with a single process */
@@ -81,6 +82,7 @@ struct struct_pcb {
   int             ret;    /* Return value of system call             */
                           /* if process interrupted because of system*/
                           /* call                                    */
+  int             prio;   // Priority
   long            args;
 };
 
@@ -126,6 +128,7 @@ void     dispatchinit( void );
 void     ready( pcb *p );
 pcb      *next( void );
 int      kill(PID_t pid);
+int      setPriority(pcb* p, int priority);
 void     contextinit( void );
 int      contextswitch( pcb *p );
 int      create( funcptr fp, size_t stack );
@@ -142,6 +145,7 @@ void                  sysstop( void );
 PID_t                 sysgetpid(void);
 void                  sysputs(char *str);
 int                   syskill(PID_t pid);
+int                   syssetprio(int priority);
 
 /* The initial process that the system creates and schedules */
 void     root( void );

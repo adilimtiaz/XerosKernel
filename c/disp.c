@@ -20,6 +20,7 @@ void     dispatch( void ) {
     // TODO: 100 is random
     char         putResult[100];
     PID_t       pid;
+    int         priority;
 
     for( p = next(); p; ) {
         //      kprintf("Process %x selected stck %x\n", p, p->esp);
@@ -61,6 +62,11 @@ void     dispatch( void ) {
                 }
 
                 p->ret = kill(pid);
+                break;
+            case(SYS_PRIORITY):
+                ap = (va_list) p->args;
+                priority = va_arg(ap, int);
+                p->ret = setPriority(p, priority);
                 break;
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
@@ -130,3 +136,22 @@ extern int kill(PID_t pid) {
     return 0;
 }
 
+extern int setPriority(pcb* p, int priority) {
+    int currPrio;
+
+    // Invalid priority level
+    if (priority < -1 || priority > 3) {
+        // kprintf("  INVALID PRIO LEVEL %u\n", priority); // TEST: 3.1
+        return -1;
+    }
+
+    currPrio = p->prio;
+
+    if (priority == -1) {
+        return currPrio;
+    }
+
+    // kprintf("  Old prio: %u, New priority: %u\n", currPrio, priority); // TEST: 3.1
+    p->prio = priority;
+    return currPrio;
+}

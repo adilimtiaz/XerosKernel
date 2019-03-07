@@ -24,13 +24,13 @@ int create( funcptr fp, size_t stackSize ) {
 
     /* If the PID becomes 0 it  has wrapped.
      * This means that the next PID we handout could be
-     * in use. To find such a free number we have to propose a 
-     * new PID and then scan to see if it is in the table. If it 
-     * is then we have to try again. 
+     * in use. To find such a free number we have to propose a
+     * new PID and then scan to see if it is in the table. If it
+     * is then we have to try again.
      */
 
 
-    if (nextpid == 0) 
+    if (nextpid == 0)
       return CREATE_FAILURE;
 
     // If the stack is too small make it larger
@@ -44,13 +44,13 @@ int create( funcptr fp, size_t stackSize ) {
             break;
         }
     }
-    
+
     //    Some stuff to help wih debugging
     //    char buf[100];
     //    sprintf(buf, "Slot %d empty\n", i);
     //    kprintf(buf);
     //    kprintf("Slot %d empty\n", i);
-    
+
     if( !p ) {
         return CREATE_FAILURE;
     }
@@ -75,6 +75,8 @@ int create( funcptr fp, size_t stackSize ) {
     p->esp = (unsigned long*)cf;
     p->state = STATE_READY;
     p->pid = nextpid++;
+    // Default priority level
+    p->prio = 3;
 
     ready( p );
     return p->pid;
