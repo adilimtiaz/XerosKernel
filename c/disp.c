@@ -23,17 +23,20 @@ void     dispatch( void ) {
 
         r = contextswitch( p );
         switch( r ) {
-            case( SYS_CREATE ):
+            case(SYS_CREATE):
                 ap = (va_list)p->args;
                 fp = (funcptr)(va_arg( ap, int ) );
                 stack = va_arg( ap, int );
                 p->ret = create( fp, stack );
                 break;
-            case( SYS_YIELD ):
+            case(SYS_YIELD):
                 ready( p );
                 p = next();
                 break;
-            case( SYS_STOP ):
+            case(SYS_GET_PID):
+                p->ret = p->pid;
+                break;
+            case(SYS_STOP):
                 p->state = STATE_STOPPED;
                 p = next();
                 break;

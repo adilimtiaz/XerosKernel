@@ -21,9 +21,9 @@ int syscall( int req, ... ) {
         "
         : "=g" (rc)
         : "g" (req), "g" (ap), "i" (KERNEL_INT)
-        : "%eax" 
+        : "%eax"
     );
- 
+
     va_end( ap );
 
     return( rc );
@@ -40,8 +40,12 @@ void sysyield( void ) {
   syscall( SYS_YIELD );
 }
 
- void sysstop( void ) {
+void sysstop( void ) {
 /**************************/
 
    syscall( SYS_STOP );
+}
+
+PID_t sysgetpid(void) {
+   return syscall(SYS_GET_PID);
 }

@@ -7,7 +7,7 @@
 
 typedef	char    Bool;        /* Boolean type                  */
 typedef unsigned int size_t; /* Something that can hold the value of
-                              * theoretical maximum number of bytes 
+                              * theoretical maximum number of bytes
                               * addressable in this architecture.
                               */
 #define	FALSE   0       /* Boolean constants             */
@@ -45,14 +45,14 @@ void           outb(unsigned int, unsigned char);
 
 
 /* Some constants involved with process creation and managment */
- 
-   /* Maximum number of processes */      
-#define MAX_PROC        64           
+
+   /* Maximum number of processes */
+#define MAX_PROC        64
    /* Kernel trap number          */
 #define KERNEL_INT      80
    /* Minimum size of a stack when a process is created */
-#define PROC_STACK      (4096 * 4)    
-                      
+#define PROC_STACK      (4096 * 4)
+
 
 /* Constants to track states that a process is in */
 #define STATE_STOPPED   0
@@ -64,6 +64,7 @@ void           outb(unsigned int, unsigned char);
 #define SYS_YIELD       11
 #define SYS_CREATE      22
 #define SYS_TIMER       33
+#define SYS_GET_PID     34
 
 
 /* Structure to track the information associated with a single process */
@@ -78,7 +79,7 @@ struct struct_pcb {
   int             ret;    /* Return value of system call             */
                           /* if process interrupted because of system*/
                           /* call                                    */
-  long            args;   
+  long            args;
 };
 
 
@@ -135,6 +136,7 @@ int      syscall(int call, ...);  /* Used in the system call stub */
 unsigned int          syscreate( funcptr fp, size_t stack );
 void                  sysyield( void );
 void                  sysstop( void );
+PID_t                 sysgetpid(void);
 
 /* The initial process that the system creates and schedules */
 void     root( void );
