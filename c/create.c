@@ -62,10 +62,16 @@ int create( funcptr fp, size_t stackSize ) {
     }
 
     cf = (context_frame *)((unsigned char *)cf + stackSize - 4);
+    *(unsigned long*) cf = (unsigned long) sysstop;
     cf--;
 
-    memset(cf, 0xA5, sizeof( context_frame ));
-
+    cf->edi = 0;
+    cf->esi = 0;
+    cf->ebp = 0;
+    cf->ebx = 0;
+    cf->edx = 0;
+    cf->ecx = 0;
+    cf->eax = 0;
     cf->iret_cs = getCS();
     cf->iret_eip = (unsigned int)fp;
     cf->eflags = STARTING_EFLAGS;
