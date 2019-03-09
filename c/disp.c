@@ -38,7 +38,7 @@ void     dispatch( void ) {
                 p = next();
                 break;
             case(SYS_STOP):
-                p->state = STATE_STOPPED;
+                cleanup(p);
                 p = next();
                 break;
             case(SYS_GET_PID):
@@ -56,7 +56,7 @@ void     dispatch( void ) {
                 // If pid is current process
                 // TODO: is this proper way to terminate?
                 if (p->pid == pid) {
-                    p->state = STATE_STOPPED;
+                    cleanup(p);
                     p = next();
                     break;
                 }
@@ -131,9 +131,13 @@ extern int kill(PID_t pid) {
         return -1;
     }
 
-    p->state = STATE_STOPPED;
-    // TODO: kfree here?
+    cleanup(p);
     return 0;
+}
+
+extern void cleanup(pcb *p) {
+    p->state = STATE_STOPPED;
+    kfree(p->esp);
 }
 
 extern int setPriority(pcb* p, int priority) {
