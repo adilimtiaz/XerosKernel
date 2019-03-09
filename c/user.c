@@ -17,7 +17,7 @@ void producer( void ) {
     }
 
 
-    sysstop();
+    return;
 }
 
 void consumer( void ) {
@@ -31,7 +31,7 @@ void consumer( void ) {
         sysyield();
     }
 
-    sysstop();
+    return;
 }
 
 void     root( void ) {
