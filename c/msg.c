@@ -11,7 +11,6 @@ pcb proctab[MAX_PROC];
 // Add target to the queue safely
 void addToQueue(pcb *p, pcb **queueHead) {
     pcb *nextItem;
-    printReadyQueue();
     if (*queueHead == NULL) {
         // p becomes the queue head
         p->next = NULL;
@@ -88,19 +87,21 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     pcb *isRcvrWaiting = p->receiver;
     pcb *prevReceiver = NULL;
 
-    while (isRcvrWaiting && isRcvrWaiting->pid != dest_pid && isRcvrWaiting->pid != 0) {
+    while (isRcvrWaiting && isRcvrWaiting->pid != dest_pid) {
         prevReceiver = isRcvrWaiting;
         isRcvrWaiting = isRcvrWaiting->next;
     }
 
+    if (*(destPCB->from_pid) == 0) {
+        isRcvrWaiting = destPCB;
+    }
     // If rcvr P is already waiting for send
     if (isRcvrWaiting) {
-        if (*(destPCB->from_pid) == 0) {
-            // If target is receiveAll, set from_pid to sender's pid
-            *(destPCB->from_pid) = p->pid;
-        } else {
-            // Else Update rcvr queue for sending process
+        if (*(destPCB->from_pid) != 0) {
+            // Update rcvr queue for sending process
             p->receiver = p->receiver->next;
+        } else {
+            *(destPCB->from_pid) = p->pid;
         }
         *(destPCB->receiveAddr) = num;
         destPCB->ret = 0;
@@ -134,14 +135,13 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
 
         // Find the first sender in queue
         if (p->sender) {
-            *num = p->sender->buf;
+            pcb* sendingPCB = p->sender;
+            *num = sendingPCB->buf;
             // TODO: Shouldnt really pass 0 as the last param. But it updates *recv addr for a process that was blocked sending
             // Dont think that should matter though.
             // SEt retval to 0 because send completed succesfully
-            unblockPCB(p->sender, 0, 0);
-            // Remove rcving P from sending P receivers
-            p->sender->receiver = p->sender->receiver->next;
-
+            sendingPCB->ret = 0;
+            printPCB("Rcving P", p);
             // Remove sending P from  rcving P senders
             p->sender = p->sender->next;
 

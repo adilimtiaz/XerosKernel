@@ -73,7 +73,7 @@ void receiver() {
     /****************************/
     kprintf("<< in receiver\n");
 
-    PID_t send_pid = 3;
+    PID_t send_pid = 0;
     unsigned int recvInt = 5;
 
     unsigned  int rcv = sysrecv(&send_pid, &recvInt);
