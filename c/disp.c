@@ -218,3 +218,13 @@ extern int setPriority(pcb* p, int priority) {
     p->prio = priority;
     return currPrio;
 }
+
+extern void printReadyQueue(void){
+    pcb* node = head;
+    int i = 0;
+    while(node){
+        kprintf("Ready %d: %x \n", i , node->pid);
+        node = node->next;
+        i++;
+    }
+}
