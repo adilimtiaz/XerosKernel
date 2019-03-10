@@ -6,10 +6,14 @@
 
 
 void _KernelEntryPoint(void);
+void _TimerEntryPoint(void);
+void _SyscallEntryPoint(void);
 
 static unsigned long      *saveESP;
 static unsigned int        rc;
 static long                args;
+static unsigned int        interrupt;
+
 
 int contextswitch( pcb *p ) {
 /**********************************/
@@ -55,13 +59,23 @@ int contextswitch( pcb *p ) {
         movl    %%edx, %%esp \n\
         movl    %%eax, 28(%%esp) \n\
         popa \n\
+        sti  \n\
         iret \n\
+   _TimerEntryPoint: \n\
+        cli \n\
+        pusha \n\
+        movl    $1, %%ecx \n\
+        jmp _KernelEntryPoint \n\
+   _SyscallEntryPoint: \n\
+        cli \n\
+        pusha \n\
+        movl $0, %%ecx \n\
    _KernelEntryPoint: \n\
-        pusha  \n\
         movl    %%eax, %%ebx \n\
         movl    saveESP, %%eax  \n\
         movl    %%esp, saveESP  \n\
         movl    %%eax, %%esp  \n\
+        movl    %%ecx, interrupt \n\
         movl    %%ebx, 28(%%esp) \n\
         movl    %%edx, 20(%%esp) \n\
         popa \n\
@@ -76,6 +90,11 @@ int contextswitch( pcb *p ) {
 
     /* save esp and read in the arguments
      */
+    if (interrupt) {
+        // kprintf("timer interrupt \n");
+        p->ret = rc;
+        rc = SYS_TIMER;
+    }
     p->esp = saveESP;
     p->args = args;
 
@@ -84,7 +103,7 @@ int contextswitch( pcb *p ) {
 
 void contextinit( void ) {
 /*******************************/
-
-  set_evec( KERNEL_INT, (int) _KernelEntryPoint );
-
+  set_evec( KERNEL_INT, (int) _SyscallEntryPoint );
+  set_evec( 32, (int) _TimerEntryPoint);
+  initPIT(100);
 }

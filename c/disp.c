@@ -68,6 +68,11 @@ void     dispatch( void ) {
                 priority = va_arg(ap, int);
                 p->ret = setPriority(p, priority);
                 break;
+            case(SYS_TIMER):
+                ready( p );
+                p = next();
+                end_of_intr();
+                break;
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
         }

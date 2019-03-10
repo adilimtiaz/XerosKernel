@@ -9,10 +9,12 @@ void producer( void ) {
 
     int         i;
 
-    for( i = 0; i < 5; i++ ) {
+    for( i = 0; i<5; i++ ) {
         kprintf( "Produce %d\n", i );
         // kprintf("<<< producer PID: %u\n", sysgetpid()); // TEST: 3.1
         // syssetprio(i); // TEST 3.1
+
+        // TEST: 3.5. Comment out the yield and make it infinite loop
         sysyield();
     }
 
@@ -25,9 +27,11 @@ void consumer( void ) {
 
     int         i;
 
-    for( i = 0; i < 5; i++ ) {
+    for( i = 0; i<5; i++ ) {
         kprintf( "Consume %d \n", i );
         // syskill(3); // TEST: 3.1
+
+        // TEST: 3.5. Comment out the yield and make it infinite loop
         sysyield();
     }
 
@@ -51,6 +55,7 @@ void     root( void ) {
     // syssetprio(10); // TEST 3.1
 
     for( ;; ) {
+        // TEST: 3.5. Comment out the yield and make it infinite loop
         sysyield();
     }
 }

@@ -7,7 +7,7 @@
 pcb     proctab[MAX_PROC];
 
 /* make sure interrupts are armed later on in the kernel development  */
-#define STARTING_EFLAGS         0x00003000
+#define STARTING_EFLAGS         0x00003200
 
 // PIDs can't start at 0 nor can they be negative
 static PID_t      nextpid = 1;
