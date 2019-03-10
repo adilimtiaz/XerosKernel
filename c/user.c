@@ -73,7 +73,7 @@ void receiver() {
     kprintf("<< in receiver\n");
 
     PID_t send_pid = 2;
-    unsigned int recvInt = 0;
+    unsigned int recvInt = 5;
 
     sysrecv(&send_pid, &recvInt);
     kprintf("Returned from sysrecv: %d\n", recvInt);

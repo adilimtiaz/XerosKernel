@@ -91,8 +91,8 @@ struct struct_pcb {
                           /* call                                    */
   int             prio;   // Priority
   long            args;
-  pcb             *sender;        // Queue of msg sender
-  pcb             *receiver;      // Queue of msg sender
+  pcb             *sender;        // Queue of senders
+  pcb             *receiver;      // Queue of receivers
   unsigned long   buf;            // Buffer pointer for send / recv
   unsigned int    *receiveAddr;   // num used in recv()
   unsigned int    *from_pid;      // form_pid used in recv()
@@ -151,7 +151,6 @@ int      create( funcptr fp, size_t stack );
 void     set_evec(unsigned int xnum, unsigned long handler);
 void     printCF (void * stack);  /* print the call frame */
 int      syscall(int call, ...);  /* Used in the system call stub */
-void     addToQueue(pcb *p, pcb *queue);
 void     removeFromQueue(pcb *target, pcb *prevSender);
 int      isInvalidAddr(unsigned int *pidAddr);
 
