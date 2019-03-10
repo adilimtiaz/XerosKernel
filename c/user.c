@@ -62,7 +62,7 @@ void sender(void) {
     /****************************/
 
     kprintf("<< in sender\n");
-    unsigned int send = syssend(3, 50);
+    unsigned int send = syssend(2, 50);
 
     kprintf(" Syssend ret: %x", send);
 
@@ -73,10 +73,11 @@ void receiver() {
     /****************************/
     kprintf("<< in receiver\n");
 
-    PID_t send_pid = 2;
+    PID_t send_pid = 3;
     unsigned int recvInt = 5;
 
-    sysrecv(&send_pid, &recvInt);
+    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+    kprintf(" Sysrcv ret: %x", rcv);
     kprintf("Returned from sysrecv: %d\n", recvInt);
 
     return;
@@ -90,8 +91,8 @@ void     root( void ) {
 
     kprintf("Root has been called\n");
 
-    send_pid = syscreate( &sender, 4096 );    // 2
-    recv_pid =  syscreate( &receiver, 4096 ); // 3
+    recv_pid =  syscreate( &receiver, 4096 ); // 2
+    send_pid = syscreate( &sender, 4096 );    // 3
     kprintf("Send pid = %u recv_pid pid = %u\n", send_pid, recv_pid);
 
     // sysputs("  << Print from sysputs"); // TEST 3.1

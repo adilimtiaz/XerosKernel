@@ -62,10 +62,7 @@ void printPCB(char *name, pcb *p) {
 
 void unblockPCB(pcb *p, int retval, int num) {
     // Update destPCB return value
-    *(p->receiveAddr) = num;
-    p->ret = retval;
-    // Add destPCB back to ready queue
-    ready(p);
+
 }
 
 extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
@@ -80,7 +77,7 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
         return -3;
     }
 
-    pcb *destPCB = (pcb * ) & proctab[dest_pid % MAX_PROC];
+    pcb *destPCB = (pcb *) &proctab[dest_pid % MAX_PROC];
 
     // If process doesn't exist
     if (destPCB->state == STATE_STOPPED) {
@@ -88,24 +85,27 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     }
 
     // Check if dest is waiting for P
-    pcb *destRcvrNodeWaiting = destPCB->receiver;
+    pcb *isRcvrWaiting = p->receiver;
     pcb *prevReceiver = NULL;
 
-    while (destRcvrNodeWaiting && destRcvrNodeWaiting->pid != p->pid && destRcvrNodeWaiting->pid != 0) {
-        prevReceiver = destRcvrNodeWaiting;
-        destRcvrNodeWaiting = destRcvrNodeWaiting->next;
+    while (isRcvrWaiting && isRcvrWaiting->pid != dest_pid && isRcvrWaiting->pid != 0) {
+        prevReceiver = isRcvrWaiting;
+        isRcvrWaiting = isRcvrWaiting->next;
     }
 
-    // If target is in receiver queue
-    if (destRcvrNodeWaiting) {
-        // Update sender queue for rcv process
-        removeFromQueue(p, prevReceiver);
-
+    // If rcvr P is already waiting for send
+    if (isRcvrWaiting) {
         if (*(destPCB->from_pid) == 0) {
             // If target is receiveAll, set from_pid to sender's pid
             *(destPCB->from_pid) = p->pid;
+        } else {
+            // Else Update rcvr queue for sending process
+            p->receiver = p->receiver->next;
         }
-        unblockPCB(destPCB, 0, num);
+        *(destPCB->receiveAddr) = num;
+        destPCB->ret = 0;
+        // Add destPCB back to ready queue
+        ready(destPCB);
         return 0;
     }
 
@@ -114,7 +114,6 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     p->buf = num;
     // Add sending p to rcving prcoess senders
     addToQueue(p, (pcb **) &destPCB->sender);
-    printPCB("Rcv Proc", destPCB);
 
     // Sending P not in return queue
     return PCB_BLOCKED;
@@ -157,6 +156,7 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
         pcb *sendingPCB = &proctab[*from_pid % MAX_PROC];
 
         // If process doesn't exist
+        // TODO: MAke a switch in case sending PCB was not inited yet, ret -100
         if (sendingPCB->state == STATE_STOPPED) {
             return -2;
         }
@@ -164,23 +164,26 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
         // Check rcving P senders for from pid
         pcb *isSenderWaiting = p->sender;
         pcb *prevSender = NULL;
-        while (isSenderWaiting->pid != *from_pid) {
+        while (isSenderWaiting && isSenderWaiting->pid != *from_pid) {
             prevSender = isSenderWaiting;
             isSenderWaiting = isSenderWaiting->next;
         }
-        printPCB("isSenderWaiting", isSenderWaiting);
 
         // Sending P already sent to rcving P
         if (isSenderWaiting) {
             // Remove sending P from rcving p senders
             p->sender = p->sender->next;
             // Update num to sending buf
+            printPCB("Rcving P", p);
 
-            // TODO: I dont think we need rcv addr
             *num = sendingPCB->buf;
             // Add blocked sender to ready queue
             ready(sendingPCB);
             return 0;
+        } else {
+            // Add rcving P to sending P's rcvr list
+            addToQueue(p, (pcb**) &sendingPCB->receiver);
+            printPCB("Rcving p", p);
         }
     }
 
@@ -188,7 +191,7 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
     p->state = STATE_RECEIVING;
     p->receiveAddr = num;
     p->from_pid = from_pid;
-    // addToQueue(p, (pcb**) &p->receiver);
+
     return PCB_BLOCKED;
 }
 
