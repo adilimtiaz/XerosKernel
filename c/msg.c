@@ -116,6 +116,7 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     // Add sending p to rcving prcoess senders
     addToQueue(p, (pcb **) &destPCB->sender);
 
+
     // Sending P not in return queue
     return PCB_BLOCKED;
 }
@@ -141,9 +142,11 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
             // Dont think that should matter though.
             // SEt retval to 0 because send completed succesfully
             sendingPCB->ret = 0;
-            printPCB("Rcving P", p);
             // Remove sending P from  rcving P senders
             p->sender = p->sender->next;
+
+            // Unblock blocked sending PCB
+            ready(sendingPCB);
 
             return 0;
         }
@@ -174,16 +177,14 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
             // Remove sending P from rcving p senders
             p->sender = p->sender->next;
             // Update num to sending buf
-            printPCB("Rcving P", p);
-
             *num = sendingPCB->buf;
             // Add blocked sender to ready queue
             ready(sendingPCB);
+            printReadyQueue();
             return 0;
         } else {
             // Add rcving P to sending P's rcvr list
             addToQueue(p, (pcb**) &sendingPCB->receiver);
-            printPCB("Rcving p", p);
         }
     }
 
