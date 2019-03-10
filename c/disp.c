@@ -75,7 +75,6 @@ void     dispatch( void ) {
                 ap = (va_list) p->args;
                 dest_pid = va_arg(ap, unsigned int);
                 sendNum = va_arg(ap, unsigned long);
-
                 int sendResult = send(p, dest_pid, sendNum);
                 if (sendResult == PCB_BLOCKED) {
                     // Receiver is not ready so
@@ -89,8 +88,12 @@ void     dispatch( void ) {
                 ap = (va_list) p->args;
                 from_pid = va_arg(ap, unsigned int*);
                 receiveNum = va_arg(ap, unsigned int*);
+                kprintf("   from_pid: %d \n", *from_pid);
+                kprintf("   receiveNum: %d \n", *receiveNum);
 
                 int receiveResult = recv(p, from_pid, receiveNum);
+                kprintf("   receiveResult: %d \n", receiveResult);
+                kprintf("   <<<< returned from recv\n");
                 if (receiveResult == PCB_BLOCKED) {
                     // Sender is not ready so
                     // block receiver and remove it from ready queue

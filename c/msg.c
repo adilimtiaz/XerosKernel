@@ -11,6 +11,21 @@ pcb     *prevReceiver;
 
 pcb     proctab[MAX_PROC];
 
+void printPCB(pcb *p) {
+  kprintf("   p->esp: %x \n", p->esp);
+  kprintf("   p->next: %x \n", p->next);
+  kprintf("   p->state: %x \n", p->state);
+  kprintf("   p->pid: %x \n", p->pid);
+  kprintf("   p->ret: %x \n", p->ret);
+  kprintf("   p->prio: %x \n", p->prio);
+  kprintf("   p->args: %x \n", p->args);
+  kprintf("   p->sender: %x \n", p->sender);
+  kprintf("   p->receiver: %x \n", p->receiver);
+  kprintf("   p->buf: %x \n", p->buf);
+  kprintf("   p->receiveAddr: %x \n", p->receiveAddr);
+  kprintf("   p->from_pid: %x \n", p->from_pid);
+}
+
 extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     // If invalid param
     // TODO: Add other invalid cases
