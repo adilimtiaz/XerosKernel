@@ -25,19 +25,33 @@ void addToQueue(pcb *p, pcb **queueHead) {
     }
 }
 
-void printPCB(pcb *p) {
-  kprintf("   p->esp: %x \n", p->esp);
-  kprintf("   p->next: %x \n", p->next);
-  kprintf("   p->state: %x \n", p->state);
-  kprintf("   p->pid: %x \n", p->pid);
-  kprintf("   p->ret: %x \n", p->ret);
-  kprintf("   p->prio: %x \n", p->prio);
-  kprintf("   p->args: %x \n", p->args);
-  kprintf("   p->sender: %x \n", p->sender);
-  kprintf("   p->receiver: %x \n", p->receiver);
-  kprintf("   p->buf: %x \n", p->buf);
-  kprintf("   p->receiveAddr: %x \n", p->receiveAddr);
-  kprintf("   p->from_pid: %x \n", p->from_pid);
+void printPCB(char* name, pcb *p) {
+  kprintf("   %s->esp: %x \n", name, p->esp);
+  kprintf("   %s->next: %x \n", name, p->next);
+  kprintf("   %s->state: %x \n", name, p->state);
+  kprintf("   %s->pid: %x \n", name, p->pid);
+  kprintf("   %s->ret: %x \n", name, p->ret);
+  kprintf("   %s->prio: %x \n", name, p->prio);
+  kprintf("   %s->args: %x \n", name, p->args);
+  pcb* node = p->sender;
+  int i = 0;
+  while(node) {
+      kprintf("   %s->sender %d: %x \n", name, i, node);
+      node = node->next;
+      i++;
+  }
+  node = p->receiver;
+  i = 0;
+  while(node) {
+      kprintf("   %s->receiver %d: %x \n", name, i, node);
+      node = node->next;
+      i++;
+  }
+
+  kprintf("   %s->receiver: %x \n", name, p->receiver);
+  kprintf("   %s->buf: %x \n", name, p->buf);
+  kprintf("   %s->receiveAddr: %x \n", name,  p->receiveAddr);
+  kprintf("   %s->from_pid: %x \n", name, p->from_pid);
 }
 
 void unblockPCB(pcb* p, int retval, int num){
@@ -61,7 +75,6 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     }
 
     pcb* destPCB = &proctab[dest_pid % MAX_PROC];
-    printPCB(destPCB);
 
     // If process doesn't exist
     if (destPCB->state == STATE_STOPPED) {
@@ -100,8 +113,6 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
 
     // Add rcving p to sending P receivers
     addToQueue(destPCB, &p->receiver);
-
-    printPCB(destPCB);
 
     // syssend will remove send p from ready queue
     return PCB_BLOCKED;
@@ -142,7 +153,6 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int * num) {
         }
 
         pcb* sendingPCB = &proctab[*from_pid % MAX_PROC];
-        printPCB(sendingPCB);
 
         // If process doesn't exist
         if (sendingPCB->state == STATE_STOPPED) {
@@ -151,7 +161,6 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int * num) {
 
         // Check rcving P senders for from pid
         pcb* isSenderWaiting = p->sender;
-        kprintf("p-reciver %x\n", isSenderWaiting);
         pcb* prevSender = NULL;
         while (isSenderWaiting->pid != *from_pid) {
             prevSender = isSenderWaiting;
@@ -161,6 +170,7 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int * num) {
         // Sending P already sent to rcving P
         if (isSenderWaiting) {
             // Remove rcving P from sending P receivers
+            printPCB("Sending PCB",sendingPCB);
             sendingPCB->receiver = sendingPCB->receiver->next;
 
             // Remove sending P from rcving p senders
@@ -179,7 +189,7 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int * num) {
     p->state = STATE_RECEIVING;
     p->receiveAddr = num;
     p->from_pid = from_pid;
-    addToQueue(p, p->receiver);
+    addToQueue(p, (pcb**) &p->receiver);
     return PCB_BLOCKED;
 }
 

@@ -62,8 +62,9 @@ void sender(void) {
     /****************************/
 
     kprintf("<< in sender\n");
-    syssend(3, 50);
-    sysyield();
+    unsigned int send = syssend(3, 50);
+
+    kprintf(" Syssend ret: %x", send);
 
     return;
 }
