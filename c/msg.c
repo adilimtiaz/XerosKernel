@@ -142,14 +142,16 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int * num) {
         }
 
         pcb* sendingPCB = &proctab[*from_pid % MAX_PROC];
+        printPCB(sendingPCB);
 
         // If process doesn't exist
         if (sendingPCB->state == STATE_STOPPED) {
             return -2;
         }
 
-        // Check rcving p senders for from id
-        pcb* isSenderWaiting = p->receiver;
+        // Check rcving P senders for from pid
+        pcb* isSenderWaiting = p->sender;
+        kprintf("p-reciver %x\n", isSenderWaiting);
         pcb* prevSender = NULL;
         while (isSenderWaiting->pid != *from_pid) {
             prevSender = isSenderWaiting;
