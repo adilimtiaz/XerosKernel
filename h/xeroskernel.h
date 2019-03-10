@@ -57,7 +57,11 @@ void           outb(unsigned int, unsigned char);
 /* Constants to track states that a process is in */
 #define STATE_STOPPED   0
 #define STATE_READY     1
+#define STATE_RECEIVING 2
+#define STATE_SENDING   3
 
+// For syssend
+#define PCB_BLOCKED 20
 
 /* System call identifiers */
 #define SYS_STOP        10
@@ -68,6 +72,8 @@ void           outb(unsigned int, unsigned char);
 #define SYS_PUTS        35
 #define SYS_KILL        36
 #define SYS_PRIORITY    37
+#define SYS_SEND        38
+#define SYS_RECEIVE     39
 
 
 /* Structure to track the information associated with a single process */
@@ -77,6 +83,7 @@ typedef struct struct_pcb pcb;
 struct struct_pcb {
   unsigned long  *esp;    /* Pointer to top of saved stack           */
   pcb            *next;   /* Next process in the list, if applicable */
+  // pcb            *prev;   /* MAYBE??? */
   int             state;  /* State the process is in, see above      */
   PID_t           pid;    /* The process's ID                        */
   int             ret;    /* Return value of system call             */
@@ -84,6 +91,11 @@ struct struct_pcb {
                           /* call                                    */
   int             prio;   // Priority
   long            args;
+  pcb             *sender;        // Queue of msg sender
+  pcb             *receiver;      // Queue of msg sender
+  unsigned long   buf;            // Buffer pointer for send / recv
+  unsigned int    *receiveAddr;   // num used in recv()
+  unsigned int    *from_pid;      // form_pid used in recv()
 };
 
 
@@ -127,15 +139,21 @@ void     dispatch( void );
 void     dispatchinit( void );
 void     ready( pcb *p );
 void     cleanup(pcb *p);
+void     terminateQueue(pcb *p, pcb *head);
 pcb      *next( void );
 int      kill(PID_t pid);
 int      setPriority(pcb* p, int priority);
+int      send(pcb *p, unsigned int dest_pid, unsigned long num);
+int      recv(pcb *p, unsigned int *from_pid, unsigned int * num);
 void     contextinit( void );
 int      contextswitch( pcb *p );
 int      create( funcptr fp, size_t stack );
 void     set_evec(unsigned int xnum, unsigned long handler);
 void     printCF (void * stack);  /* print the call frame */
 int      syscall(int call, ...);  /* Used in the system call stub */
+void     addToQueue(pcb *p, pcb *queue);
+void     removeFromQueue(pcb *target, pcb *prevSender);
+int      isInvalidAddr(unsigned int *pidAddr);
 
 
 
@@ -147,6 +165,8 @@ PID_t                 sysgetpid(void);
 void                  sysputs(char *str);
 int                   syskill(PID_t pid);
 int                   syssetprio(int priority);
+int                   syssend(unsigned int dest_pid, unsigned long num);
+int                   sysrecv(unsigned int *from_pid, unsigned int * num);
 
 /* The initial process that the system creates and schedules */
 void     root( void );

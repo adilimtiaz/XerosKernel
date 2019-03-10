@@ -5,22 +5,25 @@
 #include <xeroslib.h>
 #include <stdarg.h>
 
-
 static pcb      *head = NULL;
 static pcb      *tail = NULL;
 
 void     dispatch( void ) {
     /********************************/
 
-    pcb         *p;
-    int         r;
-    funcptr     fp;
-    int         stack;
-    va_list     ap;
+    pcb            *p;
+    int            r;
+    funcptr        fp;
+    int            stack;
+    va_list        ap;
     // TODO: 100 is random
-    char         putResult[100];
-    PID_t       pid;
-    int         priority;
+    char           putResult[100];
+    PID_t          pid;
+    int            priority;
+    unsigned int   dest_pid;
+    unsigned int   *from_pid;
+    unsigned int   sendNum;
+    unsigned int   *receiveNum;
 
     for( p = next(); p; ) {
         //      kprintf("Process %x selected stck %x\n", p, p->esp);
@@ -67,6 +70,34 @@ void     dispatch( void ) {
                 ap = (va_list) p->args;
                 priority = va_arg(ap, int);
                 p->ret = setPriority(p, priority);
+                break;
+            case(SYS_SEND):
+                ap = (va_list) p->args;
+                dest_pid = va_arg(ap, unsigned int);
+                sendNum = va_arg(ap, unsigned long);
+
+                int sendResult = send(p, dest_pid, sendNum);
+                if (sendResult == PCB_BLOCKED) {
+                    // Receiver is not ready so
+                    // block sender and remove it from ready queue
+                    p = next();
+                } else {
+                    p->ret = sendResult;
+                }
+                break;
+            case(SYS_RECEIVE):
+                ap = (va_list) p->args;
+                from_pid = va_arg(ap, unsigned int*);
+                receiveNum = va_arg(ap, unsigned int*);
+
+                int receiveResult = recv(p, from_pid, receiveNum);
+                if (receiveResult == PCB_BLOCKED) {
+                    // Sender is not ready so
+                    // block receiver and remove it from ready queue
+                    p = next();
+                } else {
+                    p->ret = receiveResult;
+                }
                 break;
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
@@ -136,8 +167,33 @@ extern int kill(PID_t pid) {
 }
 
 extern void cleanup(pcb *p) {
+    if (p->sender) {
+        terminateQueue(p, p->sender);
+    }
+
+    if (p->receiver) {
+        terminateQueue(p, p->receiver);
+    }
+
     p->state = STATE_STOPPED;
     kfree(p->esp);
+}
+
+extern void terminateQueue(pcb *p, pcb *head) {
+    pcb *nextItem;
+    pcb *tempNext;
+
+    head->ret = 1;
+    nextItem = head->next;
+    // Add all item in send / receive queue back to ready queue
+    while (nextItem) {
+        // Need tempNext as ready() clears p->next
+        tempNext = nextItem->next;
+        nextItem->ret = -1;
+        ready(nextItem);
+        nextItem = tempNext;
+    }
+    ready(head);
 }
 
 extern int setPriority(pcb* p, int priority) {
