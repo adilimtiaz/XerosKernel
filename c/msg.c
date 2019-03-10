@@ -59,11 +59,6 @@ void printPCB(char *name, pcb *p) {
     kprintf("   %s->from_pid: %x \n", name, p->from_pid);
 }
 
-void unblockPCB(pcb *p, int retval, int num) {
-    // Update destPCB return value
-
-}
-
 extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     // If invalid param
     // TODO: Add other invalid cases
@@ -76,6 +71,7 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
         return -3;
     }
 
+    // destPCB is rcving P's PCB
     pcb *destPCB = (pcb *) &proctab[dest_pid % MAX_PROC];
 
     // If process doesn't exist
@@ -83,27 +79,31 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
         return -2;
     }
 
-    // Check if dest is waiting for P
+    // Check sending P rcvr queue for dest_pid
     pcb *isRcvrWaiting = p->receiver;
-    pcb *prevReceiver = NULL;
 
     while (isRcvrWaiting && isRcvrWaiting->pid != dest_pid) {
-        prevReceiver = isRcvrWaiting;
         isRcvrWaiting = isRcvrWaiting->next;
     }
 
+    // Check if rcvr P has called rcvany
     if (*(destPCB->from_pid) == 0) {
         isRcvrWaiting = destPCB;
     }
+
     // If rcvr P is already waiting for send
     if (isRcvrWaiting) {
         if (*(destPCB->from_pid) != 0) {
-            // Update rcvr queue for sending process
+            // Update rcvr queue for sending process if not receiveany
             p->receiver = p->receiver->next;
         } else {
+            // Update from pid if reciveAny
             *(destPCB->from_pid) = p->pid;
         }
+        // Chang rcv buffer
         *(destPCB->receiveAddr) = num;
+
+        // Change rcvPCB rc to 0. Success.
         destPCB->ret = 0;
         // Add destPCB back to ready queue
         ready(destPCB);
@@ -138,8 +138,6 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
         if (p->sender) {
             pcb* sendingPCB = p->sender;
             *num = sendingPCB->buf;
-            // TODO: Shouldnt really pass 0 as the last param. But it updates *recv addr for a process that was blocked sending
-            // Dont think that should matter though.
             // SEt retval to 0 because send completed succesfully
             sendingPCB->ret = 0;
             // Remove sending P from  rcving P senders
@@ -166,9 +164,7 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
 
         // Check rcving P senders for from pid
         pcb *isSenderWaiting = p->sender;
-        pcb *prevSender = NULL;
         while (isSenderWaiting && isSenderWaiting->pid != *from_pid) {
-            prevSender = isSenderWaiting;
             isSenderWaiting = isSenderWaiting->next;
         }
 
