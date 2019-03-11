@@ -273,8 +273,48 @@ rcvr: (same as rcvr2)
     recvInt = 5;
 
 ------
+## 9. Senders sends it PID to Rcvr and Rcvr Kills it (TEST PASSED)
 
-# 8. Time-sharing
+#### Description
+
+In this test, we wanted to see if syskill works correctly when we kill
+a process that is not itself. Hence, the sender would send it's PID to
+rcvr and become blocked waiting for rcvr to finish. And then we wanted
+to see if control ever returned to syssend. If it didn't, we knew our
+test worked.
+
+### Input
+sender:
+     PID_t rcv_pid = 3;
+
+     unsigned int sendpid = sysgetpid();
+     unsigned int send = syssend(rcv_pid, sendpid);
+
+     sysputs("Should not print");
+     kprintf(" Syssend ret: %d", send);
+
+
+rcvr: (same as rcvr2)
+    kprintf("<< in receiver\n");
+
+    // Receive any
+    PID_t send_pid = 0;
+    unsigned int recvInt = 5;
+
+    // From pid is greater than maxAddr
+    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+    kprintf(" Sysrcv ret: %x \n", rcv);
+    kprintf("Returned from sysrecv: %d\n", recvInt);
+    int killResult = syskill((PID_t) recvInt);
+    kprintf("Kill result: %d", killResult);
+
+### Relevant Output
+    rcv = 0;
+    recvInt = 2;
+    kill Result = 0;
+
+------
+# 10. Time-sharing
 
 #### Description
 
@@ -321,42 +361,4 @@ pid: 2
 
 --------
 
-## 9. Senders sends it PID to Rcvr and Rcvr Kills it (TEST PASSED)
 
-#### Description
-
-In this test, we wanted to see if syskill works correctly when we kill
-a process that is not itself. Hence, the sender would send it's PID to
-rcvr and become blocked waiting for rcvr to finish. And then we wanted
-to see if control ever returned to syssend. If it didn't, we knew our
-test worked.
-
-### Input
-sender:
-     PID_t rcv_pid = 3;
-
-     unsigned int sendpid = sysgetpid();
-     unsigned int send = syssend(rcv_pid, sendpid);
-
-     sysputs("Should not print");
-     kprintf(" Syssend ret: %d", send);
-
-
-rcvr: (same as rcvr2)
-    kprintf("<< in receiver\n");
-
-    // Receive any
-    PID_t send_pid = 0;
-    unsigned int recvInt = 5;
-
-    // From pid is greater than maxAddr
-    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
-    kprintf(" Sysrcv ret: %x \n", rcv);
-    kprintf("Returned from sysrecv: %d\n", recvInt);
-    int killResult = syskill((PID_t) recvInt);
-    kprintf("Kill result: %d", killResult);
-
-### Relevant Output
-    rcv = 0;
-    recvInt = 2;
-    kill Result = 0;
