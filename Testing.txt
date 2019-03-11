@@ -6,4 +6,191 @@ on a Windows machine display as expected due to the differences with
 respect to how new lines and carriage returns are treated. Line widths
 are to be limited to 80 characters.
 
+# Tests with Send
 
+## 1. Send Process, Rcv Process Failure (TEST PASSED)
+
+#### Executive summary
+
+We created three processes. One called root that yields forever. Another
+sender that sends to pid 4 (Doesn't exist) and rcv waits for pid 4 to send.
+
+#### Description
+
+To know that it is working correctly, we need sysrecv and syssend to fail and
+return -2 as their return value. We also need control to return back to root
+to verify our readyQueue is intact. Since send and rcv ps only run once. They
+should leave the readyQueue and some indication must be printed continually to
+indicate that we are in sysyield
+
+
+#### Relevant Output
+sysrcv ret = -2;
+syssend ret = -2;
+Continually prints 'back in root' indicating proper readyQueue management
+
+
+## 2. Send Process Called, Rcv Process Not Waiting (TEST PASSED)
+
+#### Executive summary
+
+We created three processes. One called root that yields forever. Another
+sender that sends to rcvr pid  but rcvr will call rcv
+after this call when sender is blocked.
+
+#### Description
+
+To know that it is working correctly, we need sysrecv and syssend to succeed and
+return 0 as their return value. We also need control to return back to send
+after the rcv to verify that send was unblocked. Furthermore, the rcv process should
+remain on the readyQueue and it's passed num must be updated to the value that was sent
+
+### Input
+sender:
+    PID_t rcv_pid = 3;
+    unsigned int send = syssend(rcv_pid, 50);
+
+    kprintf(" Syssend ret: %x", send);
+
+rcvr:
+    PID_t send_pid = 2;
+    unsigned int recvInt = 5;
+
+    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+    kprintf(" Sysrcv ret: %x", rcv);
+    kprintf("Returned from sysrecv: %d\n", recvInt);
+
+
+#### Relevant Output
+rcv = 0; // Succesful
+recvInt = 50;
+
+send = 0;
+
+# Tests with Rcv
+## 3. Rcv Process Called, Send Process Not Waiting (TEST PASSED)
+#### Executive summary
+
+We created three processes. One called root that yields forever. Another
+rcvr that rcvs from sender pid but sender will call send on this rcv->pid
+after rcvr is blocked.
+
+#### Description
+
+To know that it is working correctly, we need sysrecv and syssend to succeed and
+return 0 as their return value. We also need control to return back to rcv
+after the send to verify that rcvr was unblocked. Furthermore, the rcvr process should
+remain on the readyQueue and it's provided buf sent must be updated to the value that was sent
+
+### Input
+sender:
+    PID_t rcv_pid = 2;
+    unsigned int send = syssend(rcv_pid, 50);
+
+    kprintf(" Syssend ret: %x", send);
+
+rcvr:
+    PID_t send_pid = 3;
+    unsigned int recvInt = 5;
+
+    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+    kprintf(" Sysrcv ret: %x", rcv);
+    kprintf("Returned from sysrecv: %d\n", recvInt);
+
+
+#### Relevant Output
+rcv = 0; // Succesful
+recvInt = 50;
+
+send = 0;
+
+## 4. RcvAny Process Called, Send Process Not Waiting (TEST PASSED)
+#### Executive summary
+
+We created three processes. One called root that yields forever. Another
+rcvr that rcvs from any pid but sender will call send on this rcv->pid
+after rcvr is blocked.
+
+#### Description
+
+To know that it is working correctly, we need sysrecv and syssend to succeed and
+return 0 as their return value. We also need control to return back to rcv
+after the send to verify that rcvr was unblocked. Furthermore, the rcvr process should
+remain on the readyQueue and it's provided buf sent must be updated to the value that was sent
+Furthermore, the rcvpcb from pid must be the pid of the sender
+
+### Input
+sender:
+    PID_t rcv_pid = 2;
+    unsigned int send = syssend(rcv_pid, 50);
+
+    kprintf(" Syssend ret: %x", send);
+
+rcvr:
+    PID_t send_pid = 0; // Rcv from any
+    unsigned int recvInt = 5;
+
+    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+    kprintf(" Sysrcv ret: %x", rcv);
+    kprintf("Returned from sysrecv: %d\n", recvInt);
+
+
+#### Relevant Output
+rcv = 0; // Succesful
+recvInt = 50;
+rcvPCB from_pid = 3;
+
+send = 0;
+
+## 5. Process Sends to Rcvr, But Rcvr stops (TEST PASSED)
+#### Executive summary
+
+We created three processes. One called root that yields forever. Another
+rcvr that calls systop after sender will call send on this rcv->pid
+
+#### Description
+
+To know that it is working correctly, we need syssend to fail and
+return -1 as their return value. We also need control to return back to send
+after the send to verify that send was unblocked. Furthermore, the rcvr process should
+not remain on the readyQueue.
+
+### Input
+sender:
+    PID_t rcv_pid = 3;
+    unsigned int send = syssend(rcv_pid, 50);
+
+    kprintf(" Syssend ret: %x", send);
+
+rcvr:
+   // Runs after sender is complete
+   sysstop();
+
+
+#### Relevant Output
+send = -1;
+
+## 6. 2 rcvr processes wait for sender But Sender stops (TEST PASSED)
+#### Executive summary
+
+We created four processes. One called root that yields forever. Two
+rcvrs that rcv from a sender and block themselves. After this,
+sender calls systop after both rcvrs call rcv on its rcvr->pid
+
+#### Description
+
+To know that it is working correctly, we need both rs to fail and
+return -1 as their return value. We also need control to return back to both send procs
+after the send to verify that sends were unblocked. Furthermore, the rcvr process should
+not remain on the readyQueue.
+
+### Input
+sender:
+    PID_t rcv_pid = 3;
+    unsigned int send = syssend(rcv_pid, 50);
+
+    kprintf(" Syssend ret: %x", send);
+
+rcvr:
+   // Runs after sender is complete
+   sysstop();

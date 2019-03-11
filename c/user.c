@@ -62,11 +62,11 @@ void sender(void) {
     /****************************/
 
     kprintf("<< in sender\n");
-    // PID_t rcv_pid = 3;
-    // unsigned int send = syssend(rcv_pid, 50);
+    PID_t rcv_pid = 3;
+    sysyield();
+    unsigned int send = syssend(rcv_pid, 50);
 
-    // kprintf(" Syssend ret: %d", send);
-    sysstop();
+    kprintf(" Syssend ret: %d", send);
 
     return;
 }
@@ -86,7 +86,7 @@ void receiver(void) {
 }
 
 void receiver2(void){
-    kprintf("<< in receiver\n");
+    kprintf("<< in receiver 2\n");
 
     PID_t send_pid = 4;
     unsigned int recvInt = 5;
@@ -106,14 +106,18 @@ void     root( void ) {
     kprintf("Root has been called\n");
 
     recv_pid =  syscreate( &receiver, 4096 ); // 2
-    recv_pid2 =  syscreate( &receiver, 4096 ); // 2
+    recv_pid2 =  syscreate( &receiver2, 4096 ); // 2
     send_pid = syscreate( &sender, 4096 );    // 3
     kprintf("Send pid = %u recv_pid pid = %u\n", send_pid, recv_pid);
 
     // sysputs("  << Print from sysputs"); // TEST 3.1
     // syssetprio(10); // TEST 3.1
 
-    for( ;; ) {
+    for( int i = 0;; i++) {
+        if (i==1){
+           int kill = syskill(send_pid);
+           kprintf("Kill return value %d \n", kill);
+        }
         sysyield();
     }
 }

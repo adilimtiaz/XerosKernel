@@ -27,38 +27,6 @@ void addToQueue(pcb *p, pcb **queueHead) {
     }
 }
 
-void printPCB(char *name, pcb *p) {
-    if(!p){
-        kprintf("Invalid PCB \n");
-        return;
-    }
-    kprintf("   %s Pointer Val: %x \n", name, p);
-    kprintf("   %s->esp: %x \n", name, p->esp);
-    kprintf("   %s->next: %x \n", name, p->next);
-    kprintf("   %s->state: %x \n", name, p->state);
-    kprintf("   %s->pid: %x \n", name, p->pid);
-    kprintf("   %s->ret: %x \n", name, p->ret);
-    kprintf("   %s->prio: %x \n", name, p->prio);
-    kprintf("   %s->args: %x \n", name, p->args);
-    pcb *node = p->sender;
-    int i = 0;
-    while (node) {
-        kprintf("   %s->sender %d: %x \n", name, i, node);
-        node = node->next;
-        i++;
-    }
-    node = p->receiver;
-    i = 0;
-    while (node) {
-        kprintf("   %s->receiver %d: %x \n", name, i, node);
-        node = node->next;
-        i++;
-    }
-    kprintf("   %s->buf: %x \n", name, p->buf);
-    kprintf("   %s->receiveAddr: %x \n", name, p->receiveAddr);
-    kprintf("   %s->from_pid: %x \n", name, p->from_pid);
-}
-
 extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
     // If invalid param
     // TODO: Add other invalid cases
@@ -180,6 +148,13 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
         } else {
             // Add rcving P to sending P's rcvr list
             addToQueue(p, (pcb**) &sendingPCB->receiver);
+            int i = 0;
+            pcb* node = sendingPCB->receiver;
+            while(node){
+                // kprintf("Rcvr queue for sending PCB %d PID: %d \n", i, node->pid);
+                node = node->next;
+                i++;
+            }
         }
     }
 

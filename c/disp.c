@@ -8,6 +8,38 @@
 static pcb      *head = NULL;
 static pcb      *tail = NULL;
 
+extern void printPCB(char *name, pcb *p) {
+    if(!p){
+        kprintf("Invalid PCB \n");
+        return;
+    }
+    kprintf("   %s Pointer Val: %x \n", name, p);
+    kprintf("   %s->esp: %x \n", name, p->esp);
+    kprintf("   %s->next: %x \n", name, p->next);
+    kprintf("   %s->state: %x \n", name, p->state);
+    kprintf("   %s->pid: %x \n", name, p->pid);
+    kprintf("   %s->ret: %x \n", name, p->ret);
+    kprintf("   %s->prio: %x \n", name, p->prio);
+    kprintf("   %s->args: %x \n", name, p->args);
+    pcb *node = p->sender;
+    int i = 0;
+    while (node) {
+        kprintf("   %s->sender %d: %x \n", name, i, node);
+        node = node->next;
+        i++;
+    }
+    node = p->receiver;
+    i = 0;
+    while (node) {
+        kprintf("   %s->receiver %d: %x \n", name, i, node);
+        node = node->next;
+        i++;
+    }
+    kprintf("   %s->buf: %x \n", name, p->buf);
+    kprintf("   %s->receiveAddr: %x \n", name, p->receiveAddr);
+    kprintf("   %s->from_pid: %x \n", name, p->from_pid);
+}
+
 void     dispatch( void ) {
     /********************************/
 
@@ -152,13 +184,7 @@ extern pcb      *next( void ) {
 }
 
 extern int kill(PID_t pid) {
-    pcb *p = NULL;
-
-    for (int i = 0; i < MAX_PROC; i++) {
-        if (proctab[i].pid == pid) {
-            p = &proctab[i];
-        }
-    }
+    pcb *p = (pcb*) &proctab[pid % MAX_PROC];
 
     // If pid not found
     if (p == NULL) {
@@ -183,18 +209,19 @@ extern void cleanup(pcb *p) {
 }
 
 extern void terminateQueue(pcb *p, pcb *queueHead) {
-    pcb *nextItem;
-    pcb *tempNext;
-
     pcb* node = queueHead;
+    pcb* tempNext = node;
     // Add all item in send / receive queue back to ready queue
-    while (node) {
+    int i = 0;
+    while (tempNext) {
+        node = tempNext;
         // Need tempNext as ready() clears p->next
         node->ret = -1;
+        tempNext = node->next;
         ready(node);
-        node = node->next;
+        i++;
     }
-    printReadyQueue();
+    // printReadyQueue();
 }
 
 extern int setPriority(pcb* p, int priority) {
