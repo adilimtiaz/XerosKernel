@@ -98,9 +98,9 @@ int create( funcptr fp, size_t stackSize ) {
     /* else if (nextpid == 4) { p->prio = 1; } // Med */
 
     // CASE 3: C -> A -> B
-    /* if (nextpid == 2)      { p->prio = 1; } // Low */
-    /* else if (nextpid == 3) { p->prio = 2; } // Highest */
-    /* else if (nextpid == 4) { p->prio = 0; } // Med */
+    /* if (nextpid == 2)      { p->prio = 1; } // Med */
+    /* else if (nextpid == 3) { p->prio = 2; } // Low */
+    /* else if (nextpid == 4) { p->prio = 0; } // Highest */
 
     ready(p, p->prio);
     return p->pid;
