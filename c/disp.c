@@ -88,15 +88,34 @@ void     dispatch( void ) {
                 ap = (va_list) p->args;
                 pid = (PID_t) va_arg(ap, int);
 
-                // If pid is current process
-                // TODO: is this proper way to terminate?
-                if (p->pid == pid) {
-                    cleanup(p);
-                    p = next();
+                p->ret = kill(pid);
+                if(p->ret != 0){
+                    // Kill failed
                     break;
                 }
+                if (p->pid == pid) {
+                    // If current process switch to next process
+                    p = next();
+                } else {
+                    pcb* node = head;
+                    pcb* prevNode = NULL;
+                    while(node){
+                        if(node->pid == pid){
+                           if(prevNode) {
+                              prevNode->next = node->next;
+                              if(!prevNode->next){
+                                  // Tail case
+                                  tail = prevNode;
+                              }
+                           }
+                           break;
+                        }
+                        prevNode = node;
+                        node = node->next;
+                    }
+                    // printReadyQueue();
+                }
 
-                p->ret = kill(pid);
                 break;
             case(SYS_PRIORITY):
                 ap = (va_list) p->args;
@@ -120,12 +139,8 @@ void     dispatch( void ) {
                 ap = (va_list) p->args;
                 from_pid = va_arg(ap, unsigned int*);
                 receiveNum = va_arg(ap, unsigned int*);
-                kprintf("   from_pid: %d \n", *from_pid);
-                kprintf("   receiveNum: %d \n", *receiveNum);
 
                 int receiveResult = recv(p, from_pid, receiveNum);
-                kprintf("   receiveResult: %d \n", receiveResult);
-                kprintf("   <<<< returned from recv\n");
                 if (receiveResult == PCB_BLOCKED) {
                     // Sender is not ready so
                     // block receiver and remove it from ready queue
@@ -187,11 +202,12 @@ extern int kill(PID_t pid) {
     pcb *p = (pcb*) &proctab[pid % MAX_PROC];
 
     // If pid not found
-    if (p == NULL) {
+    if (p->state == STATE_STOPPED) {
         return -1;
     }
 
     cleanup(p);
+
     return 0;
 }
 

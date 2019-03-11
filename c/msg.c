@@ -6,6 +6,7 @@
 #include <i386.h>
 
 pcb proctab[MAX_PROC];
+extern char* maxaddr;
 
 
 // Add target to the queue safely
@@ -92,8 +93,8 @@ extern int send(pcb *p, unsigned int dest_pid, unsigned long num) {
 extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
     // If invalid param
     // TODO: Add other invalid cases
-    if (num == 0) {
-        return -100;
+    if (isInvalidAddr(num)) {
+        return -4;
     }
 
     // If receiveALL case
@@ -186,6 +187,7 @@ extern int isInvalidAddr(unsigned int *pidAddr) {
             (pidAddr > 0 && pidAddr < (unsigned int *) KERNEL_STACK) ||
             // In hole region
             (pidAddr > (unsigned int *) HOLESTART && pidAddr < (unsigned int *) HOLEEND)
+            || (pidAddr > (unsigned int*) maxaddr)
             ) {
         return 1;
     } else {

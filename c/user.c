@@ -60,12 +60,13 @@
 
 void sender(void) {
     /****************************/
-
-    kprintf("<< in sender\n");
     PID_t rcv_pid = 3;
-    sysyield();
-    unsigned int send = syssend(rcv_pid, 50);
+   // kprintf("Stopping send process");
+   // sysstop();
+    unsigned int sendpid = sysgetpid();
+    unsigned int send = syssend(rcv_pid, sendpid);
 
+    sysputs("Should not print");
     kprintf(" Syssend ret: %d", send);
 
     return;
@@ -73,14 +74,15 @@ void sender(void) {
 
 void receiver(void) {
     /****************************/
-    kprintf("<< in receiver\n");
-
-    PID_t send_pid = 4;
+    PID_t send_pid = 0;
     unsigned int recvInt = 5;
 
+    // From pid is greater than maxAddr
     unsigned  int rcv = sysrecv(&send_pid, &recvInt);
     kprintf(" Sysrcv ret: %x \n", rcv);
     kprintf("Returned from sysrecv: %d\n", recvInt);
+    int killResult = syskill((PID_t) recvInt);
+    kprintf("Kill result: %d", killResult);
 
     return;
 }
@@ -91,7 +93,8 @@ void receiver2(void){
     PID_t send_pid = 4;
     unsigned int recvInt = 5;
 
-    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+    // Num is in hole
+    unsigned  int rcv = sysrecv(&send_pid, (unsigned int*) (640*1025));
     kprintf(" Sysrcv ret 2: %x \n", rcv);
     kprintf("Returned from sysrecv 2: %d\n", recvInt);
 
@@ -101,23 +104,18 @@ void receiver2(void){
 // NOTE: root() for testing send / recv
 void     root( void ) {
     /****************************/
-    PID_t send_pid, recv_pid, recv_pid2;
+    PID_t send_pid, recv_pid;
 
     kprintf("Root has been called\n");
 
-    recv_pid =  syscreate( &receiver, 4096 ); // 2
-    recv_pid2 =  syscreate( &receiver2, 4096 ); // 2
-    send_pid = syscreate( &sender, 4096 );    // 3
+    send_pid = syscreate( &sender, 4096 );    // 2
+    recv_pid =  syscreate( &receiver, 4096 ); // 3
     kprintf("Send pid = %u recv_pid pid = %u\n", send_pid, recv_pid);
 
     // sysputs("  << Print from sysputs"); // TEST 3.1
     // syssetprio(10); // TEST 3.1
 
-    for( int i = 0;; i++) {
-        if (i==1){
-           int kill = syskill(send_pid);
-           kprintf("Kill return value %d \n", kill);
-        }
+    for( ;; ) {
         sysyield();
     }
 }
