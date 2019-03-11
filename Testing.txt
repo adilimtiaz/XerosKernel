@@ -239,7 +239,57 @@ rcvInt2 = 5;
 
 # Tests with Syskill
 
-## 8. Process kills iteslf (TEST PASSED)
+------
+# 8. Time-sharing
+
+#### Description
+
+When two processes are in loop, they should alternate between each other
+from TIME_INT.
+
+```
+// PID = 2
+void A(void) {
+    ...
+    for( ;; ) {
+    }
+}
+
+// PID = 1
+void root(void) {
+    ...
+
+    for( ;; ) {
+    }
+}
+
+// in disp.c
+...
+case(SYS_TIMER):
+    ...
+    kprintf("pid: %d\n", p->pid);
+    p = next();
+    end_of_intr();
+...
+
+```
+
+#### Sample Outputs
+
+```
+pid: 1
+pid: 2
+pid: 1
+pid: 2
+pid: 1
+pid: 2
+```
+
+--------
+
+
+
+## 9. Process kills iteslf (TEST PASSED)
 
 #### Description
 
@@ -272,7 +322,12 @@ rcvr: (same as rcvr2)
     rcv2 = -1;
     recvInt = 5;
 
+<<<<<<< HEAD
 ## 8. Senders sends it PID to Rcvr and Rcvr Kills it (TEST PASSED)
+=======
+------
+## 10. Senders sends it PID to Rcvr and Rcvr Kills it (TEST PASSED)
+>>>>>>> 23e966cd6b3ec00c15dfb37f5160b8481eb18287
 
 #### Description
 
@@ -311,3 +366,53 @@ rcvr: (same as rcvr2)
     rcv = 0;
     recvInt = 2;
     kill Result = 0;
+
+------
+# 10. Time-sharing
+
+#### Description
+
+When two processes are in loop, they should alternate between each other
+from TIME_INT.
+
+```
+// PID = 2
+void A(void) {
+    ...
+    for( ;; ) {
+    }
+}
+
+// PID = 1
+void root(void) {
+    ...
+
+    for( ;; ) {
+    }
+}
+
+// in disp.c
+...
+case(SYS_TIMER):
+    ...
+    kprintf("pid: %d\n", p->pid);
+    p = next();
+    end_of_intr();
+...
+
+```
+
+#### Sample Outputs
+
+```
+pid: 1
+pid: 2
+pid: 1
+pid: 2
+pid: 1
+pid: 2
+```
+
+--------
+
+
