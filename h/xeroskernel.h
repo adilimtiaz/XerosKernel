@@ -139,7 +139,7 @@ void     dispatch( void );
 void     dispatchinit( void );
 void     ready( pcb *p );
 void     cleanup(pcb *p);
-void     terminateQueue(pcb *p, pcb *head);
+void     terminateQueue(pcb *p, pcb *queueHead);
 pcb      *next( void );
 int      kill(PID_t pid);
 int      setPriority(pcb* p, int priority);

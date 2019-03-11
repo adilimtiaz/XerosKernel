@@ -62,37 +62,52 @@ void sender(void) {
     /****************************/
 
     kprintf("<< in sender\n");
-    unsigned int send = syssend(3, 50);
+    // PID_t rcv_pid = 3;
+    // unsigned int send = syssend(rcv_pid, 50);
 
-    kprintf(" Syssend ret: %x", send);
+    // kprintf(" Syssend ret: %d", send);
+    sysstop();
 
     return;
 }
 
-void receiver() {
+void receiver(void) {
     /****************************/
     kprintf("<< in receiver\n");
 
-    PID_t send_pid = 0;
+    PID_t send_pid = 4;
     unsigned int recvInt = 5;
 
     unsigned  int rcv = sysrecv(&send_pid, &recvInt);
-    kprintf(" Sysrcv ret: %x", rcv);
+    kprintf(" Sysrcv ret: %x \n", rcv);
     kprintf("Returned from sysrecv: %d\n", recvInt);
 
     return;
+}
+
+void receiver2(void){
+    kprintf("<< in receiver\n");
+
+    PID_t send_pid = 4;
+    unsigned int recvInt = 5;
+
+    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+    kprintf(" Sysrcv ret 2: %x \n", rcv);
+    kprintf("Returned from sysrecv 2: %d\n", recvInt);
+
 }
 
 
 // NOTE: root() for testing send / recv
 void     root( void ) {
     /****************************/
-    PID_t send_pid, recv_pid;
+    PID_t send_pid, recv_pid, recv_pid2;
 
     kprintf("Root has been called\n");
 
-    send_pid = syscreate( &sender, 4096 );    // 3
     recv_pid =  syscreate( &receiver, 4096 ); // 2
+    recv_pid2 =  syscreate( &receiver, 4096 ); // 2
+    send_pid = syscreate( &sender, 4096 );    // 3
     kprintf("Send pid = %u recv_pid pid = %u\n", send_pid, recv_pid);
 
     // sysputs("  << Print from sysputs"); // TEST 3.1

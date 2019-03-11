@@ -182,21 +182,19 @@ extern void cleanup(pcb *p) {
     kfree(p->esp);
 }
 
-extern void terminateQueue(pcb *p, pcb *head) {
+extern void terminateQueue(pcb *p, pcb *queueHead) {
     pcb *nextItem;
     pcb *tempNext;
 
-    head->ret = 1;
-    nextItem = head->next;
+    pcb* node = queueHead;
     // Add all item in send / receive queue back to ready queue
-    while (nextItem) {
+    while (node) {
         // Need tempNext as ready() clears p->next
-        tempNext = nextItem->next;
-        nextItem->ret = -1;
-        ready(nextItem);
-        nextItem = tempNext;
+        node->ret = -1;
+        ready(node);
+        node = node->next;
     }
-    ready(head);
+    printReadyQueue();
 }
 
 extern int setPriority(pcb* p, int priority) {

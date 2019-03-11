@@ -11,9 +11,9 @@ pcb proctab[MAX_PROC];
 // Add target to the queue safely
 void addToQueue(pcb *p, pcb **queueHead) {
     pcb *nextItem;
+    p->next = NULL;
     if (*queueHead == NULL) {
         // p becomes the queue head
-        p->next = NULL;
         *queueHead = p;
         // Next is null because this a new queue.
         // queueHead->next = NULL;
@@ -176,7 +176,6 @@ extern int recv(pcb *p, unsigned int *from_pid, unsigned int *num) {
             *num = sendingPCB->buf;
             // Add blocked sender to ready queue
             ready(sendingPCB);
-            printReadyQueue();
             return 0;
         } else {
             // Add rcving P to sending P's rcvr list
