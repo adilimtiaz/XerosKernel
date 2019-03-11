@@ -301,7 +301,7 @@ extern void terminateQueue(pcb *p, pcb *queueHead) {
         // Need tempNext as ready() clears p->next
         node->ret = -1;
         tempNext = node->next;
-        ready(node);
+        ready(node, node->prio);
         i++;
     }
     // printReadyQueue();
