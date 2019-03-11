@@ -2,6 +2,7 @@
 */
 
 #include <xeroskernel.h>
+#include <xeroslib.h>
 
 // /* Your code goes here */
 // void producer( void ) {
@@ -55,66 +56,139 @@
 //     }
 // }
 
+
 // ==============================
-// Processes for testing send / recv
+// 3.5.1 Tests
 
-void sender(void) {
+void prioThreeA( void ) {
     /****************************/
 
-    kprintf("<< in sender\n");
-    // PID_t rcv_pid = 3;
-    // unsigned int send = syssend(rcv_pid, 50);
+    int         i;
+    char putsStr[10];
 
-    // kprintf(" Syssend ret: %d", send);
-    sysstop();
+    for( i = 0; i < 2; i++ ) {
+        sprintf(putsStr, "A %d\n", i);
+        sysputs(putsStr);
+    }
 
     return;
 }
 
-void receiver(void) {
+void prioThreeB( void ) {
     /****************************/
-    kprintf("<< in receiver\n");
 
-    PID_t send_pid = 4;
-    unsigned int recvInt = 5;
+    int         i;
+    char putsStr[10];
 
-    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
-    kprintf(" Sysrcv ret: %x \n", rcv);
-    kprintf("Returned from sysrecv: %d\n", recvInt);
+    for( i = 0; i < 2; i++ ) {
+        sprintf(putsStr, "B %d\n", i);
+        sysputs(putsStr);
+    }
 
     return;
 }
 
-void receiver2(void){
-    kprintf("<< in receiver\n");
+void prioThreeC( void ) {
+    /****************************/
 
-    PID_t send_pid = 4;
-    unsigned int recvInt = 5;
+    int         i;
+    char putsStr[10];
 
-    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
-    kprintf(" Sysrcv ret 2: %x \n", rcv);
-    kprintf("Returned from sysrecv 2: %d\n", recvInt);
+    for( i = 0; i < 2; i++ ) {
+        sprintf(putsStr, "C %d\n", i);
+        sysputs(putsStr);
+    }
 
+    return;
 }
 
-
-// NOTE: root() for testing send / recv
-void     root( void ) {
+void root( void ) {
     /****************************/
-    PID_t send_pid, recv_pid, recv_pid2;
+    char putsStr[50];
+    PID_t A_pid, B_pid, C_pid;
+    sysputs("Root has been called\n");
 
-    kprintf("Root has been called\n");
+    // Test yield to cover empty queue case
+    sysyield();
 
-    recv_pid =  syscreate( &receiver, 4096 ); // 2
-    recv_pid2 =  syscreate( &receiver, 4096 ); // 2
-    send_pid = syscreate( &sender, 4096 );    // 3
-    kprintf("Send pid = %u recv_pid pid = %u\n", send_pid, recv_pid);
+    // NOTE: See create.c for other cases
+    // CASE 1: A -> B -> C
+    A_pid = syscreate( &prioThreeA, 4096 );
+    B_pid = syscreate( &prioThreeB, 4096 );
+    C_pid = syscreate( &prioThreeC, 4096 );
 
-    // sysputs("  << Print from sysputs"); // TEST 3.1
-    // syssetprio(10); // TEST 3.1
+    sprintf(putsStr, "A pid = %u B pid = %u C pid = %u\n",
+                        A_pid, B_pid, C_pid);
+    sysputs(putsStr);
 
     for( ;; ) {
-        // TEST: 3.5. Comment out the yield and make it infinite loop
+        // Works regardless of this yield
         sysyield();
     }
 }
+
+// ==============================
+// Processes for testing send / recv
+//
+//void sender(void) {
+//    /****************************/
+//
+//    kprintf("<< in sender\n");
+//    // PID_t rcv_pid = 3;
+//    // unsigned int send = syssend(rcv_pid, 50);
+//    int         i;
+//
+//    // kprintf(" Syssend ret: %d", send);
+//    sysstop();
+//
+//    return;
+//}
+//
+//void receiver(void) {
+//    /****************************/
+//    kprintf("<< in receiver\n");
+//
+//    PID_t send_pid = 4;
+//    unsigned int recvInt = 5;
+//
+//    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+//    kprintf(" Sysrcv ret: %x \n", rcv);
+//    kprintf("Returned from sysrecv: %d\n", recvInt);
+//
+//
+//    return;
+//}
+//
+//void receiver2(void){
+//    kprintf("<< in receiver\n");
+//
+//    PID_t send_pid = 4;
+//    unsigned int recvInt = 5;
+//
+//    unsigned  int rcv = sysrecv(&send_pid, &recvInt);
+//    kprintf(" Sysrcv ret 2: %x \n", rcv);
+//    kprintf("Returned from sysrecv 2: %d\n", recvInt);
+//
+//}
+//
+//
+//// NOTE: root() for testing send / recv
+//void     root( void ) {
+//    /****************************/
+//    PID_t send_pid, recv_pid, recv_pid2;
+//
+//    kprintf("Root has been called\n");
+//
+//    recv_pid =  syscreate( &receiver, 4096 ); // 2
+//    recv_pid2 =  syscreate( &receiver, 4096 ); // 2
+//    send_pid = syscreate( &sender, 4096 );    // 3
+//    kprintf("Send pid = %u recv_pid pid = %u\n", send_pid, recv_pid);
+//
+//    // sysputs("  << Print from sysputs"); // TEST 3.1
+//    // syssetprio(10); // TEST 3.1
+//
+//    for( ;; ) {
+//        // TEST: 3.5. Comment out the yield and make it infinite loop
+//        /* sysyield(); */
+//    }
+//}

@@ -86,6 +86,22 @@ int create( funcptr fp, size_t stackSize ) {
     // Default priority level
     p->prio = 3;
 
-    ready( p );
+    // 3.5 Priority tests
+    // By defualt, next() always runs the highest priority p
+    // So if syssetprio(x) where x < 0 is run, that process wil always run first
+    // Gonna change prio level at create() stage to test prio
+    // NOTE: A_pid = 2, B_pid = 3, C_pid = 4
+    //
+    // CASE 2: B -> C -> A
+    /* if (nextpid == 2)      { p->prio = 2; } // Low */
+    /* else if (nextpid == 3) { p->prio = 0; } // Highest */
+    /* else if (nextpid == 4) { p->prio = 1; } // Med */
+
+    // CASE 3: C -> A -> B
+    /* if (nextpid == 2)      { p->prio = 1; } // Low */
+    /* else if (nextpid == 3) { p->prio = 2; } // Highest */
+    /* else if (nextpid == 4) { p->prio = 0; } // Med */
+
+    ready(p, p->prio);
     return p->pid;
 }

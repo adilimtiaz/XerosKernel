@@ -3,10 +3,20 @@
 
 #include <xeroskernel.h>
 #include <xeroslib.h>
+#include <i386.h>
 #include <stdarg.h>
 
 static pcb      *head = NULL;
 static pcb      *tail = NULL;
+
+static pcb *prio3QHead = NULL;
+static pcb *prio3QTail = NULL;
+static pcb *prio2QHead = NULL;
+static pcb *prio2QTail = NULL;
+static pcb *prio1QHead = NULL;
+static pcb *prio1QTail = NULL;
+static pcb *prio0QHead = NULL;
+static pcb *prio0QTail = NULL;
 
 void     dispatch( void ) {
     /********************************/
@@ -17,7 +27,7 @@ void     dispatch( void ) {
     int            stack;
     va_list        ap;
     // TODO: 100 is random
-    char           putResult[100];
+    char           *putResult;
     PID_t          pid;
     int            priority;
     unsigned int   dest_pid;
@@ -37,7 +47,9 @@ void     dispatch( void ) {
                 p->ret = create( fp, stack );
                 break;
             case(SYS_YIELD):
-                ready( p );
+                // Even if p was promoted before, when yield was called
+                // it means it ran. Hence, put it back to its intended queue
+                ready(p, p->prio);
                 p = next();
                 break;
             case(SYS_STOP):
@@ -49,15 +61,13 @@ void     dispatch( void ) {
                 break;
             case(SYS_PUTS):
                 ap = (va_list) p->args;
-                sprintf(putResult, "%s\n", (va_arg(ap, char*)));
+                putResult = (va_arg(ap, char*));
                 kprintf(putResult);
                 break;
             case(SYS_KILL):
                 ap = (va_list) p->args;
                 pid = (PID_t) va_arg(ap, int);
 
-                // If pid is current process
-                // TODO: is this proper way to terminate?
                 if (p->pid == pid) {
                     cleanup(p);
                     p = next();
@@ -72,9 +82,16 @@ void     dispatch( void ) {
                 p->ret = setPriority(p, priority);
                 break;
             case(SYS_TIMER):
-                ready( p );
+                // If p is already highest priority
+                if (p->prio == 0) {
+                    ready(p, p->prio);
+                } else {
+                    // Raise priority
+                    ready(p, p->prio - 1);
+                }
                 p = next();
                 end_of_intr();
+                break;
             case(SYS_SEND):
                 ap = (va_list) p->args;
                 dest_pid = va_arg(ap, unsigned int);
@@ -92,12 +109,12 @@ void     dispatch( void ) {
                 ap = (va_list) p->args;
                 from_pid = va_arg(ap, unsigned int*);
                 receiveNum = va_arg(ap, unsigned int*);
-                kprintf("   from_pid: %d \n", *from_pid);
-                kprintf("   receiveNum: %d \n", *receiveNum);
+                /* kprintf("   from_pid: %d \n", *from_pid); */
+                /* kprintf("   receiveNum: %d \n", *receiveNum); */
 
                 int receiveResult = recv(p, from_pid, receiveNum);
-                kprintf("   receiveResult: %d \n", receiveResult);
-                kprintf("   <<<< returned from recv\n");
+                /* kprintf("   receiveResult: %d \n", receiveResult); */
+                /* kprintf("   <<<< returned from recv\n"); */
                 if (receiveResult == PCB_BLOCKED) {
                     // Sender is not ready so
                     // block receiver and remove it from ready queue
@@ -123,32 +140,81 @@ extern void dispatchinit( void ) {
     memset(proctab, 0, sizeof( pcb ) * MAX_PROC);
 }
 
-extern void     ready( pcb *p ) {
+extern void setPrioQueue(pcb ***targetHead, pcb ***targetTail, int prio) {
+  switch (prio) {
+    case 3:
+      *targetHead  = &prio3QHead;
+      *targetTail  = &prio3QTail;
+      break;
+    case 2:
+      *targetHead  = &prio2QHead;
+      *targetTail  = &prio2QTail;
+      break;
+    case 1:
+      *targetHead  = &prio1QHead;
+      *targetTail  = &prio1QTail;
+      break;
+    default:
+      *targetHead  = &prio0QHead;
+      *targetTail  = &prio0QTail;
+      break;
+  }
+}
+
+// Find non-empty Q from the higheset to lowest priority
+extern void findPrioQueue(pcb ***targetHead, pcb ***targetTail) {
+    if (prio0QHead) {
+        /* kprintf(" < prio0QHead Found\n"); */
+        *targetHead  = &prio0QHead;
+        *targetTail  = &prio0QTail;
+    } else if (prio1QHead) {
+        /* kprintf(" < prio1QHead Found\n"); */
+        *targetHead  = &prio1QHead;
+        *targetTail  = &prio1QTail;
+    } else if (prio2QHead) {
+        /* kprintf(" < prio2QHead Found\n"); */
+        *targetHead  = &prio2QHead;
+        *targetTail  = &prio2QTail;
+    } else {
+        /* kprintf(" < prio3QHead Found\n"); */
+        *targetHead  = &prio3QHead;
+        *targetTail  = &prio3QTail;
+    }
+}
+
+extern void     ready( pcb *p, int prio ) {
     /*******************************/
 
     p->next = NULL;
     p->state = STATE_READY;
 
-    if( tail ) {
-        tail->next = p;
+    pcb **targetHead;
+    pcb **targetTail;
+    setPrioQueue(&targetHead, &targetTail, prio);
+
+    if(*targetTail) {
+        (*targetTail)->next = p;
     } else {
-        head = p;
+        *targetHead = p;
     }
 
-    tail = p;
+    *targetTail = p;
 }
 
 extern pcb      *next( void ) {
     /*****************************/
 
     pcb *p;
+    pcb **targetHead;
+    pcb **targetTail;
+    findPrioQueue(&targetHead, &targetTail);
 
-    p = head;
+    p = *targetHead;
 
     if( p ) {
-        head = p->next;
-        if( !head ) {
-            tail = NULL;
+        *targetHead = p->next;
+        if( !*targetHead ) {
+            *targetTail = NULL;
         }
     }
 
@@ -187,15 +253,12 @@ extern void cleanup(pcb *p) {
 }
 
 extern void terminateQueue(pcb *p, pcb *queueHead) {
-    pcb *nextItem;
-    pcb *tempNext;
-
     pcb* node = queueHead;
     // Add all item in send / receive queue back to ready queue
     while (node) {
         // Need tempNext as ready() clears p->next
         node->ret = -1;
-        ready(node);
+        ready(node, node->prio);
         node = node->next;
     }
     printReadyQueue();

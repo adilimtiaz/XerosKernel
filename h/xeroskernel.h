@@ -137,9 +137,11 @@ typedef void    (*funcptr)(void);
 /* call these.                                                 */
 void     dispatch( void );
 void     dispatchinit( void );
-void     ready( pcb *p );
+void     ready( pcb *p, int prio );
 void     cleanup(pcb *p);
 void     terminateQueue(pcb *p, pcb *queueHead);
+void     setPrioQueue(pcb ***targetHead, pcb ***targetTail, int prio);
+void     findPrioQueue(pcb ***targetHead, pcb ***targetTail);
 pcb      *next( void );
 int      kill(PID_t pid);
 int      setPriority(pcb* p, int priority);
