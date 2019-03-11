@@ -150,7 +150,6 @@ void     dispatch( void ) {
                 }
                 break;
             case(SYS_TIMER):
-                kprintf("In timer");
                 ready( p );
                 p = next();
                 end_of_intr();

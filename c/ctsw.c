@@ -75,6 +75,7 @@ int contextswitch( pcb *p ) {
         movl    saveESP, %%eax  \n\
         movl    %%esp, saveESP  \n\
         movl    %%eax, %%esp  \n\
+        movl    %%ecx, interrupt \n\
         movl    %%ebx, 28(%%esp) \n\
         movl    %%edx, 20(%%esp) \n\
         popa \n\
