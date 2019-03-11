@@ -69,3 +69,7 @@ int syssend(unsigned int dest_pid, unsigned long num) {
 int sysrecv(unsigned int *from_pid, unsigned int * num) {
     return syscall(SYS_RECEIVE, from_pid, num);
 }
+
+int syssleep(unsigned int milliseconds){
+    return syscall(SYS_SLEEP, milliseconds);
+}

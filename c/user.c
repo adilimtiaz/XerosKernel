@@ -59,15 +59,14 @@
 // Processes for testing send / recv
 
 void sender(void) {
-    /****************************/
-    PID_t rcv_pid = 3;
-   // kprintf("Stopping send process");
-   // sysstop();
+    kprintf("In sender");
+    PID_t rcv_pid = 4;
+    // kprintf("Stopping send process");
+    // sysstop();
     unsigned int sendpid = sysgetpid();
     unsigned int send = syssend(rcv_pid, sendpid);
 
-    sysputs("Should not print");
-    kprintf(" Syssend ret: %d", send);
+    kprintf(" Syssend ret: %d ", send);
 
     return;
 }
@@ -79,7 +78,7 @@ void receiver(void) {
 
     // From pid is greater than maxAddr
     unsigned  int rcv = sysrecv(&send_pid, &recvInt);
-    kprintf(" Sysrcv ret: %x \n", rcv);
+    kprintf(" Sysrcv ret: %x \n ", rcv);
     kprintf("Returned from sysrecv: %d\n", recvInt);
     int killResult = syskill((PID_t) recvInt);
     kprintf("Kill result: %d", killResult);
@@ -95,26 +94,32 @@ void receiver2(void){
 
     // Num is in hole
     unsigned  int rcv = sysrecv(&send_pid, (unsigned int*) (640*1025));
-    kprintf(" Sysrcv ret 2: %x \n", rcv);
+    kprintf(" Sysrcv ret 2: %x \n ", rcv);
     kprintf("Returned from sysrecv 2: %d\n", recvInt);
-
 }
-
 
 // NOTE: root() for testing send / recv
 void     root( void ) {
     /****************************/
     PID_t send_pid, recv_pid;
 
-    sysputs("Root has been called\n");
+    kprintf("Root has been called\n");
 
-    send_pid = syscreate( &sender, 4096 );    // 2
+
+
+
+    send_pid = syscreate( &sender, 4096  );    // 2
     recv_pid =  syscreate( &receiver, 4096 ); // 3
     kprintf("Send pid = %u recv_pid pid = %u\n", send_pid, recv_pid);
 
-    // sysputs("  << Print from sysputs"); // TEST 3.1
+    // syssleep(50);
+    kprintf("Returned from sleep");
+
+    for(;;){
+        // sysyield();
+    };
+
+    // sysputs("  << Print from sysputs "); // TEST 3.1
     // syssetprio(10); // TEST 3.1
 
-    for( ;; ) {
-    }
 }

@@ -59,6 +59,7 @@ void           outb(unsigned int, unsigned char);
 #define STATE_READY     1
 #define STATE_RECEIVING 2
 #define STATE_SENDING   3
+#define STATE_SLEEPING  4
 
 // For syssend
 #define PCB_BLOCKED 20
@@ -74,6 +75,7 @@ void           outb(unsigned int, unsigned char);
 #define SYS_PRIORITY    37
 #define SYS_SEND        38
 #define SYS_RECEIVE     39
+#define SYS_SLEEP       40
 
 
 /* Structure to track the information associated with a single process */
@@ -96,6 +98,7 @@ struct struct_pcb {
   unsigned long   buf;            // Buffer pointer for send / recv
   unsigned int    *receiveAddr;   // num used in recv()
   unsigned int    *from_pid;      // form_pid used in recv()
+  int             delta;          // Delta from earliest waking process
 };
 
 
@@ -134,8 +137,10 @@ typedef void    (*funcptr)(void);
 
 
 /* Internal functions for the kernel, applications must never  */
-/* call these.                                                 */
+/* call these.
+ **/
 void     end_of_intr(void);
+pcb*     idleProc;
 void     dispatch( void );
 void     dispatchinit( void );
 void     ready( pcb *p );
@@ -156,6 +161,8 @@ void     printCF (void * stack);  /* print the call frame */
 int      syscall(int call, ...);  /* Used in the system call stub */
 void     removeFromQueue(pcb *target, pcb *prevSender);
 int      isInvalidAddr(unsigned int *pidAddr);
+void     tick(void);
+int      sleep(PID_t pid, unsigned int milliseconds);
 
 
 
@@ -169,6 +176,7 @@ int                   syskill(PID_t pid);
 int                   syssetprio(int priority);
 int                   syssend(unsigned int dest_pid, unsigned long num);
 int                   sysrecv(unsigned int *from_pid, unsigned int * num);
+int                   syssleep(unsigned int milliseconds);
 
 /* The initial process that the system creates and schedules */
 void     root( void );

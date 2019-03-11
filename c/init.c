@@ -9,6 +9,9 @@ extern	int	end( void );    /* end of kernel image, use &end        */
 extern  long	freemem; 	/* start of free memory (set in i386.c) */
 extern char	*maxaddr;	/* max memory address (set in i386.c)	*/
 
+pcb* idleProc;
+
+
 /************************************************************************/
 /***				NOTE:				      ***/
 /***								      ***/
@@ -23,6 +26,10 @@ extern char	*maxaddr;	/* max memory address (set in i386.c)	*/
  *  The init process, this is where it all begins...
  *------------------------------------------------------------------------
  */
+void idle(void) {
+  for (;;) {  }
+}
+
 void initproc( void )				/* The beginning */
 {
 
@@ -40,7 +47,14 @@ void initproc( void )				/* The beginning */
   contextinit();
   kprintf("context inited\n");
   
-  
+
+  create(idle, PROC_STACK);
+
+  // Remove idleproc from ready queue
+  idleProc = &proctab[1];
+  next();
+
+
   create( root, PROC_STACK );
   kprintf("create inited\n");
   

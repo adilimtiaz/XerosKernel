@@ -8,6 +8,10 @@
 static pcb      *head = NULL;
 static pcb      *tail = NULL;
 
+static pcb* deltaList = NULL;
+// Number of ticks left for first sleeping process to wake
+static int ticksBase = 0;
+
 extern void printPCB(char *name, pcb *p) {
     if(!p){
         kprintf("Invalid PCB \n");
@@ -38,6 +42,7 @@ extern void printPCB(char *name, pcb *p) {
     kprintf("   %s->buf: %x \n", name, p->buf);
     kprintf("   %s->receiveAddr: %x \n", name, p->receiveAddr);
     kprintf("   %s->from_pid: %x \n", name, p->from_pid);
+    kprintf("   %s->delta: %x \n", name, p->delta);
 }
 
 void     dispatch( void ) {
@@ -107,6 +112,9 @@ void     dispatch( void ) {
                                   // Tail case
                                   tail = prevNode;
                               }
+                           } else {
+                               head = NULL;
+                               tail = NULL;
                            }
                            break;
                         }
@@ -151,12 +159,20 @@ void     dispatch( void ) {
                 break;
             case(SYS_TIMER):
                 ready( p );
+                tick();
                 p = next();
                 end_of_intr();
+                break;
+            case(SYS_SLEEP):
+                ap = (va_list) p->args;
+                unsigned int milliseconds = va_arg(ap, unsigned int);
+                sleep(p->pid, milliseconds);
+                p = next();
                 break;
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
         }
+        if(!p) {ready(idleProc); p = next();};
     }
 
     kprintf( "Out of processes: dying\n" );
@@ -272,5 +288,51 @@ extern void printReadyQueue(void){
         kprintf("Ready %d: %x \n", i , node->pid);
         node = node->next;
         i++;
+    }
+}
+
+extern int sleep(PID_t pid, unsigned int milliseconds){
+    // Number of ticks left for process to wake up
+    int ticksLeft = milliseconds/10;
+
+    kprintf("Ticks left: %x", ticksLeft);
+
+    pcb *p = (pcb*) &proctab[pid % MAX_PROC];
+
+    p->state = STATE_SLEEPING;
+    p->next = NULL;
+
+    // Insert into delta
+    if(!deltaList) {
+        deltaList = p;
+        ticksBase = ticksLeft;
+        p->delta = ticksLeft;
+    }
+    return 1;
+}
+
+extern void tick(void){
+    if(!deltaList) {return;}
+
+    pcb** node = &deltaList;
+    //pcb* tempNext = *node;
+    ticksBase--;
+    while(*node){
+        // node = &tempNext;
+        (*node)->delta--;
+        if((*node)->delta==0){
+           // Wake process up
+           pcb* nodeToWake = *node;
+           ready(nodeToWake);
+            /**
+            node = tempNext;
+            // Need tempNext as ready() clears p->next
+            node->ret = -1;
+            tempNext = node->next;
+            ready(node, node->prio);
+            i++;
+             **/
+        }
+        node = &(*node)->next;
     }
 }
