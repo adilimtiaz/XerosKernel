@@ -169,6 +169,7 @@ void     dispatch( void ) {
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
         }
+        if(!p){ p = idleProc; }
     }
 
     kprintf( "Out of processes: dying\n" );

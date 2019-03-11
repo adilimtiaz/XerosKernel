@@ -134,7 +134,9 @@ typedef void    (*funcptr)(void);
 
 
 /* Internal functions for the kernel, applications must never  */
-/* call these.                                                 */
+/* call these.
+ **/
+pcb*     idleProc;
 void     dispatch( void );
 void     dispatchinit( void );
 void     ready( pcb *p, int prio );

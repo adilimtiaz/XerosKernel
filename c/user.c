@@ -187,8 +187,4 @@ void     root( void  ) {
 
     // sysputs("  << Print from sysputs "); // TEST 3.1
     // syssetprio(10); // TEST 3.1
-
-    for( ;;  ) {
-        sysyield();
-    }
 }
