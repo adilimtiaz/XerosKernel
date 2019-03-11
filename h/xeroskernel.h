@@ -135,6 +135,7 @@ typedef void    (*funcptr)(void);
 
 /* Internal functions for the kernel, applications must never  */
 /* call these.                                                 */
+void     end_of_intr(void);
 void     dispatch( void );
 void     dispatchinit( void );
 void     ready( pcb *p );

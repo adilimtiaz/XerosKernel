@@ -106,7 +106,7 @@ void     root( void ) {
     /****************************/
     PID_t send_pid, recv_pid;
 
-    kprintf("Root has been called\n");
+    sysputs("Root has been called\n");
 
     send_pid = syscreate( &sender, 4096 );    // 2
     recv_pid =  syscreate( &receiver, 4096 ); // 3
