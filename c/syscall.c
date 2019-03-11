@@ -61,3 +61,11 @@ int syskill(PID_t pid) {
 int syssetprio(int priority) {
     return syscall(SYS_PRIORITY, priority);
 }
+
+int syssend(unsigned int dest_pid, unsigned long num) {
+    return syscall(SYS_SEND, dest_pid, num);
+}
+
+int sysrecv(unsigned int *from_pid, unsigned int * num) {
+    return syscall(SYS_RECEIVE, from_pid, num);
+}

@@ -12,11 +12,10 @@ pcb     proctab[MAX_PROC];
 // PIDs can't start at 0 nor can they be negative
 static PID_t      nextpid = 1;
 
-
-
 int create( funcptr fp, size_t stackSize ) {
 /***********************************************/
 
+    int                 indexFromPID;
     context_frame       *cf;
     pcb                 *p = NULL;
     int                 i;
@@ -39,10 +38,13 @@ int create( funcptr fp, size_t stackSize ) {
     }
 
     for( i = 0; i < MAX_PROC; i++ ) {
-        if( proctab[i].state == STATE_STOPPED ) {
-            p = &proctab[i];
+        // PID will start from random num, but all 0 ~ 64 will be checked
+        indexFromPID = nextpid % MAX_PROC;
+        if( proctab[indexFromPID].state == STATE_STOPPED ) {
+            p = &proctab[indexFromPID];
             break;
         }
+        nextpid++;
     }
 
     //    Some stuff to help wih debugging
@@ -80,7 +82,7 @@ int create( funcptr fp, size_t stackSize ) {
     cf->ebp = cf->esp;
     p->esp = (unsigned long*)cf;
     p->state = STATE_READY;
-    p->pid = nextpid++;
+    p->pid = nextpid;
     // Default priority level
     p->prio = 3;
 

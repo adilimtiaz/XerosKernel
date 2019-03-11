@@ -5,22 +5,25 @@
 #include <xeroslib.h>
 #include <stdarg.h>
 
-
 static pcb      *head = NULL;
 static pcb      *tail = NULL;
 
 void     dispatch( void ) {
     /********************************/
 
-    pcb         *p;
-    int         r;
-    funcptr     fp;
-    int         stack;
-    va_list     ap;
+    pcb            *p;
+    int            r;
+    funcptr        fp;
+    int            stack;
+    va_list        ap;
     // TODO: 100 is random
-    char         putResult[100];
-    PID_t       pid;
-    int         priority;
+    char           putResult[100];
+    PID_t          pid;
+    int            priority;
+    unsigned int   dest_pid;
+    unsigned int   *from_pid;
+    unsigned int   sendNum;
+    unsigned int   *receiveNum;
 
     for( p = next(); p; ) {
         //      kprintf("Process %x selected stck %x\n", p, p->esp);
@@ -38,7 +41,7 @@ void     dispatch( void ) {
                 p = next();
                 break;
             case(SYS_STOP):
-                p->state = STATE_STOPPED;
+                cleanup(p);
                 p = next();
                 break;
             case(SYS_GET_PID):
@@ -56,7 +59,7 @@ void     dispatch( void ) {
                 // If pid is current process
                 // TODO: is this proper way to terminate?
                 if (p->pid == pid) {
-                    p->state = STATE_STOPPED;
+                    cleanup(p);
                     p = next();
                     break;
                 }
@@ -72,6 +75,36 @@ void     dispatch( void ) {
                 ready( p );
                 p = next();
                 end_of_intr();
+            case(SYS_SEND):
+                ap = (va_list) p->args;
+                dest_pid = va_arg(ap, unsigned int);
+                sendNum = va_arg(ap, unsigned long);
+                int sendResult = send(p, dest_pid, sendNum);
+                if (sendResult == PCB_BLOCKED) {
+                    // Receiver is not ready so
+                    // block sender and remove it from ready queue
+                    p = next();
+                } else {
+                    p->ret = sendResult;
+                }
+                break;
+            case(SYS_RECEIVE):
+                ap = (va_list) p->args;
+                from_pid = va_arg(ap, unsigned int*);
+                receiveNum = va_arg(ap, unsigned int*);
+                kprintf("   from_pid: %d \n", *from_pid);
+                kprintf("   receiveNum: %d \n", *receiveNum);
+
+                int receiveResult = recv(p, from_pid, receiveNum);
+                kprintf("   receiveResult: %d \n", receiveResult);
+                kprintf("   <<<< returned from recv\n");
+                if (receiveResult == PCB_BLOCKED) {
+                    // Sender is not ready so
+                    // block receiver and remove it from ready queue
+                    p = next();
+                } else {
+                    p->ret = receiveResult;
+                }
                 break;
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
@@ -136,9 +169,36 @@ extern int kill(PID_t pid) {
         return -1;
     }
 
-    p->state = STATE_STOPPED;
-    // TODO: kfree here?
+    cleanup(p);
     return 0;
+}
+
+extern void cleanup(pcb *p) {
+    if (p->sender) {
+        terminateQueue(p, p->sender);
+    }
+
+    if (p->receiver) {
+        terminateQueue(p, p->receiver);
+    }
+
+    p->state = STATE_STOPPED;
+    kfree(p->esp);
+}
+
+extern void terminateQueue(pcb *p, pcb *queueHead) {
+    pcb *nextItem;
+    pcb *tempNext;
+
+    pcb* node = queueHead;
+    // Add all item in send / receive queue back to ready queue
+    while (node) {
+        // Need tempNext as ready() clears p->next
+        node->ret = -1;
+        ready(node);
+        node = node->next;
+    }
+    printReadyQueue();
 }
 
 extern int setPriority(pcb* p, int priority) {
@@ -159,4 +219,14 @@ extern int setPriority(pcb* p, int priority) {
     // kprintf("  Old prio: %u, New priority: %u\n", currPrio, priority); // TEST: 3.1
     p->prio = priority;
     return currPrio;
+}
+
+extern void printReadyQueue(void){
+    pcb* node = head;
+    int i = 0;
+    while(node){
+        kprintf("Ready %d: %x \n", i , node->pid);
+        node = node->next;
+        i++;
+    }
 }
