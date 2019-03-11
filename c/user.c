@@ -116,6 +116,5 @@ void     root( void ) {
     // syssetprio(10); // TEST 3.1
 
     for( ;; ) {
-        sysyield();
     }
 }

@@ -149,6 +149,12 @@ void     dispatch( void ) {
                     p->ret = receiveResult;
                 }
                 break;
+            case(SYS_TIMER):
+                kprintf("In timer");
+                ready( p );
+                p = next();
+                end_of_intr();
+                break;
             default:
                 kprintf( "Bad Sys request %d, pid = %u\n", r, p->pid );
         }
