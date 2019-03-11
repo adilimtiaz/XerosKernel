@@ -146,6 +146,7 @@ pcb      *next( void );
 int      kill(PID_t pid);
 int      setPriority(pcb* p, int priority);
 void     printReadyQueue(void);
+void     printPCB(char *name, pcb *p);
 int      send(pcb *p, unsigned int dest_pid, unsigned long num);
 int      recv(pcb *p, unsigned int *from_pid, unsigned int * num);
 void     contextinit( void );
