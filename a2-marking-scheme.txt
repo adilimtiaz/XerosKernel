@@ -1,0 +1,258 @@
+Total before late penalty [/84]
+
+
+Comments:
+
+Compilation
+    Compiles without warnings, except those explicitly permitted.
+Compilation Score [/2]
+
+Other: These are discretionary marks used to deal with those
+situations when there is an issue with something that isn't covered
+off in one of the other sections. [/4]
+
+
+
+===============================================
+1 -- Functionality : [/69] marks total for this section 
+
+
+(a) Modified Process Creation : [/3] marks
+     2 sets stack up to return to sysstop
+     1 enables interrupts in eflags on stack
+
+(b) Aux System Calls : [/6] marks
+    1 sysputs prints to screen
+    1 getpid returns pid,
+    2 PID value is unique yet indexing can be in constant time regardless 
+      of pcbtable size
+    2 syskill - proper return codes, 0 working, -1 target process doesn't
+      exist, killing oneself is allowed, should basically be a systop.
+      Killing of process 0 is to return -1, it definitely should not
+      result in the null process being terminated.
+
+(c) IPC System : [/16] marks - subtotal from below
+
+      2 Receiver has to wait as sender not ready
+      2 Sender has to wait as receiver not ready
+      2 Receive any has to wait
+      2 Receive from a non-existent process
+      2 Send to a non-existent process
+      2 Send to a process that dies after sender blocks
+      2 Receive from a specific process, but process dies
+         after the receiver blocks
+      2 Checks the receive "buff" is reasonable, (i.e. not in hole, not 
+        not past end of memory.
+
+(d) Preemption : [/6] marks
+     	1 Moves interrupted process to end of ready queue
+        1 Interrupt timer is initialized
+    	1 Context switcher disables interrupts and distinguishes the interrupts
+	1 Dispatcher services the clock interrupt and re-arms the apic
+        2 Priority queues implemented as well as call to set a process's
+	 
+(e) Idle Process : [/2] marks
+    	1 Reuses a single idle process
+	1 Is not run when other processes can run
+
+(f) Sleep Device : [/5] marks
+        1 "tick" increments/decrements time
+	1 Converts ms from sleep system all to ticks
+	2 Uses a delta list or equivalently efficient data structure
+	1 Returns the amount of time the process has left to sleep. 
+	  (Might have to check this manually)
+
+
+(g) Producer/Consumer : [/9] marks
+       1 - Root starts and prints it is alive and sleeps
+       1 - 4 processes created and each prints it is alive
+       1 - Each created process sleeps for 5 seconds
+       1 - Each created process receives a message from root and prints that
+           the message was received. 
+       1 - Each process uses the value sent by root as the amount of
+           time to sleep and sleeps that amount of time
+       1 - Each process says it is done and runs off the end of its code
+       1 - Root attempts to receive a message from the 4th process (should fail)
+       1 - Root attempts to send a message to the 3rd process  (should fail)
+
+(h) Testing : [/22] 
+    Each test case is  worth 2 marks, there are 10 test cases. 
+    • send test case 1
+    • send test case 2
+    • receive test case 1
+    • receive test case 2
+    • send failure 
+    • receive failure test 1
+    • receive failure test 2
+    • demo of time sharing working
+    * demo of syskill test 1
+    * demo os syskill test 2
+    • test cases follows organization as described in instructions. 2 pts
+
+
+=============================================================
+
+Broad marking criteria   [/9]
+
+
+A detailed description of what is being looked for in this section can
+be found towards the bottom of this file.
+
+
+
+------
+Readability 
+
+   Criteria:
+
+      3 marks - Code is "clean", understandable and well organized,
+      with no major issues. 
+     
+
+      2   There may be minor issues with consistency of indentation and
+       use of white space. variable naming or general
+       organization. Although annoying, this does not have a major
+       impact on readability. 
+
+      1  marks - There are major issues with indentation, whitespace,
+      variable naming
+
+      0  Marks there are major problems across multiple categories
+      with respect to readability 
+
+
+Readability Score [/3]
+-----
+
+
+Documentation 
+
+    Criteria: 
+      3 marks  - Code is well and completely commented
+      
+      2 marks  - One or two places could benefit from some additional
+      comments to add clarity to what is being done. 
+
+      1 mark - Multiple locations where sections of code are
+      uncommented or comments aren't helpful 
+
+      0  Few or no helpful comments. 
+
+
+Documentation Score [/3]
+
+
+
+-------
+
+
+Code Quality
+
+     Criteria 
+       3 marks  - Uniformly good choices of algorithms and data
+       structures across all aspects of the solution
+
+       2 marks - Good choice of algorithms or data structures except
+       for 1 or 2 situations where some improvement is possible
+
+       1  - Poor algorithms or data structure choice in multiple
+       situations and major improvement is possible.
+
+       0 Consistently poor algorithm and data structure choices.
+plus
+       2 code compiles without warnings
+
+Code Quality Score [/3]
+
+
+
+Description of the expectations with respect to the broad marking
+criteria
+
+
+READABILITY 
+   It is important that your code is readable not only when you write
+   but at some later time and it also needs to be readable by a
+   knowledgeable third (i.e. a TA, someone else in the class :-). In
+   essence a knowledgeable third party would be someone capable of
+   reading the code and be broadly familiar with a typical solution
+   approach but might not be familiar with the subtle nuances of the
+   algorithm you have developed/used and how it manifests itself in
+   the code. To make your code readable it is important to consider
+   the following sorts of things:
+
+   * Make sure to use indention in a consistent fashion. In particular
+     make sure that you don't use tabs as just how they are displayed
+     depends upon a lot of things. You might have your tabs set to be
+     2 spaces while someone else might have it set at 8 spaces or vary
+     across the line and those differences will affect readability. 
+
+   * Keeps lines to a reasonable link. Many display devices are
+     optimized for looking at code that has no more than 80 characters
+     on a line. 
+
+   * Use white space (blank lines, spaces) to separate distinct blocks
+     of code. Certainly you want blank lines (and some other stuff)
+     between functions and within blocks of code in a function that
+     perform a related task.
+
+   * Make sure that your variables have meaningful names that suggest
+     the type of information the variable holds and is purpose. The
+     only exception (sometimes) is if the variable is loop index.
+
+   * Make sure that functions also have meaningful names and are
+     organized in a meaningful way. Code used multiple times is to be
+     encapsulated into functions. 
+
+Documenting your code:
+
+   Every file provided to you that you need to add substantial content
+   to, or any file containing code that you add to the git project is
+   to start with a comment describing the purpose of this code from a
+   high level perspective. (If the file was not substantially empty
+   then add this comments at the point where you started adding your
+   code.)  This comment is to contain:
+   
+   * A list of all the functions/methods that are to be called from
+     outside this file. (i.e. functions/methods used only within this
+     file are not included.) For each of these functions/methods
+     provide a brief description of the function's purpose and what it
+     returns, and, if appropriate, how to interpret any values that
+     might be returned. For example you might indicate that it returns
+     the count of the number of elements in an array or a negative
+     value if an error was encountered.
+
+  * The code itself needs to be well commented, but care needs to be
+    taken to avoid over commenting and affecting readability. The
+    purpose of comments is to assist the reader in understanding what
+    the code is supposed to do and **how** it goes about doing it. To
+    achieve this make sure that there is a comment before each
+    function explaining the purpose of the function, what it expects
+    as inputs and produces as outputs. Within the code you should have
+    comments explaining the purpose of lines of related code.
+
+  * Any unusual or complex algorithms or strategies for solving a
+    problem also need to be documented in the code. In some cases
+    these comments can go before the declaration of the function
+    whereas in other cases the comment belongs with the relevant
+    section of code. To help decide where the comment belongs evaluate
+    the comment with respect to its purpose. If it is a general
+    description of what you are doing and how then put it before the
+    function or maybe even at the start of the file. If it is more
+    related to the code then put it with the code. There need to be
+    sufficient comments so that one doesn't have to read the code in
+    detail to determine what the code is supposed to be doing.
+
+
+Code Quality
+
+    There are often many poor or inefficient ways to write
+    a program to solve a problem and typically only a few good or
+    reasonable ways. A good way needs to balance efficiency across the
+    dimensions of memory usage to hold the code and/or data, the
+    amount of CPU time used by the program, and maintainability. In
+    class (or tutorials) we will often discuss certain ways of doing
+    something and why. If you deviate from these in any significant
+    way it is important to justify these changes.
+
+
