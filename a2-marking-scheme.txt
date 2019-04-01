@@ -1,4 +1,4 @@
-Total before late penalty [/84]
+Total before late penalty [73/84]
 
 
 Comments:
@@ -44,26 +44,27 @@ off in one of the other sections. [/4]
       2 Checks the receive "buff" is reasonable, (i.e. not in hole, not 
         not past end of memory.
 
-(d) Preemption : [/6] marks
+(d) Preemption : [5/6] marks
      	1 Moves interrupted process to end of ready queue
         1 Interrupt timer is initialized
     	1 Context switcher disables interrupts and distinguishes the interrupts
 	1 Dispatcher services the clock interrupt and re-arms the apic
-        2 Priority queues implemented as well as call to set a process's
-	 
+        1/2 Priority queues implemented as well as call to set a process's
+	  -- priority set but not used
+
 (e) Idle Process : [/2] marks
     	1 Reuses a single idle process
 	1 Is not run when other processes can run
 
-(f) Sleep Device : [/5] marks
+(f) Sleep Device : [4/5] marks
         1 "tick" increments/decrements time
 	1 Converts ms from sleep system all to ticks
 	2 Uses a delta list or equivalently efficient data structure
-	1 Returns the amount of time the process has left to sleep. 
+	0/1 Returns the amount of time the process has left to sleep. 
 	  (Might have to check this manually)
 
 
-(g) Producer/Consumer : [/9] marks
+(g) Producer/Consumer : [0/9] marks
        1 - Root starts and prints it is alive and sleeps
        1 - 4 processes created and each prints it is alive
        1 - Each created process sleeps for 5 seconds
